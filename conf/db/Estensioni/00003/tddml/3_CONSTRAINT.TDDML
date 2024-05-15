@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE TDDML SYSTEM "../../../TDDML.dtd">
+<TDDML>
+  <!-- CONFIGURAZIONE_ARCHISMALL (CONFIGU) -->
+  <AlterTable schema="SOFTRE" name="CONFIGURAZIONE_ARCHISMALL">
+    <AddConstraint>
+      <Constraint name="Azienda_1204605380" refschema="THIP" reftable="AZIENDE_ESTESE" schema="SOFTRE" ondelete="Restrict">
+        <ColumnRef name="ID_AZIENDA"/>
+      </Constraint>
+    </AddConstraint>
+  </AlterTable>
+</TDDML>

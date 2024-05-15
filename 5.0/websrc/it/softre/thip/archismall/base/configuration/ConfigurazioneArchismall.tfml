@@ -1,0 +1,30 @@
+<tfml>
+  <generator type="form"/>
+  <form classHdr="ConfigurazioneArchismall"
+    name="ConfigurazioneArchismallForm"
+    locktype="nolock"
+    errorList="yes" menubar="yes" toolbar="yes" submitReset="none"
+    jsLibraryName="it/softre/thip/archismall/base/configuration/ConfigurazioneArchismall.js"
+    webFormModifierClass="it.softre.thip.archismall.base.configuration.web.ConfigurazioneArchismallFormModifier"
+    onLoadPresent="yes"
+    header="com.thera.thermfw.common.Header.jsp"
+    footer="com.thera.thermfw.common.Footer.jsp">
+    <menubar  name="myMenuBar">
+      <import file="it/thera/thip/cs/defObjMenu.tfml"/>
+    </menubar>
+    <toolbar name="myToolBar" imgwidth="16" imgheight="16">
+      <import file="it/thera/thip/cs/defObjMenu.tfml"/>
+    </toolbar>
+    <textinput name="IdAzienda" classAD="IdAzienda"/>
+    <tabbed name="mytabbed" height="100%" width="100%">
+      <tab name="tab1" resourceFile="it.softre.thip.archismall.base.configuration.resources.ConfigurazioneArchismall" resourceID="tab1">
+        <textarea name="Url" classAD="Url"/>
+        <textarea name="ClientSecret" classAD="ClientSecret"/>
+        <textarea name="ClientId" classAD="ClientId"/>
+        <textinput name="IdUtente" classAD="IdUtente"/>
+        <textinput name="Password" classAD="Password"/>
+      </tab>
+    </tabbed>
+  </form>
+</tfml>
+

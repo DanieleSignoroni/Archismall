@@ -1,0 +1,7 @@
+<B>2024-05-15 08:57:40</B>
+<BR>Il dizionario <B>PACCHETTTO_TRASMISSIONE</B> è stato cancellato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\Archismall\conf\db\Estensioni\00002\tddml\2_DROP_PACCHETTTO_TRASMISSIONE.TDDML</B> e' stato generato correttamente.
+<BR>Il dizionario <B>PACCHETTTO_TRASMISSIONE</B> è stato creato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\Archismall\conf\db\Estensioni\00002\tddml\2_PACCHETTTO_TRASMISSIONE.TDDML</B> e' stato generato correttamente.
+<BR>Il file <B>W:\PthDev\Projects\Panthera\Archismall\conf\db\Estensioni\00002\tddml\2_CONSTRAINT.TDDML</B> e' stato generato correttamente.
+<BR><B>La generazione tabella è completata con successo</B><BR>
