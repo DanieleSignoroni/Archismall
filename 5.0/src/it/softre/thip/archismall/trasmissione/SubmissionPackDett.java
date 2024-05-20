@@ -1,6 +1,17 @@
 package it.softre.thip.archismall.trasmissione;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.sql.Date;
+import java.util.Base64;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.thera.thermfw.base.Trace;
+import com.thera.thermfw.base.Utils;
 
 import it.softre.thip.archismall.base.generale.ArchismallUtils.TipoDocumentiAttivo;
 import it.softre.thip.archismall.base.generale.ArchismallUtils.TipoDocumentoPassivo;
@@ -208,5 +219,61 @@ public class SubmissionPackDett {
 		}else {
 			return null;
 		}
+	}
+
+	public JSONObject getFileJSONObject() throws FileNotFoundException {
+		if(getNomeFile() == null)
+			return null;
+		JSONObject json = new JSONObject();
+		File file = new File(getNomeFile()); 
+		if(file.exists()) {
+			try {
+				json.put("content", getEncodedFile(getFileBytes(file)));
+				json.put("name", file.getName());
+			} catch (JSONException e) {
+				e.printStackTrace(Trace.excStream);
+			} catch (Exception e) {
+				e.printStackTrace(Trace.excStream);
+			}
+		}else {
+			throw new FileNotFoundException("File non trovato con percorso : "+getNomeFile());
+		}
+		return json;
+	}
+
+	public byte[] getFileBytes(File file) throws Exception{
+		FileInputStream fis = new FileInputStream(file);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		Utils.copyStream(fis, baos);
+		return baos.toByteArray();
+	}
+
+	public String getEncodedFile(byte [] bytes){
+		return new String (Base64.getEncoder().encode(bytes));
+	}
+
+	public JSONObject getJSONVersamento() {
+		JSONObject json = new JSONObject();
+		try {
+			json.put("file", getFileJSONObject());
+			//ora ci aggiungiamo tutto il resto 
+			json.put("idArchiPro", "");
+			json.put("fornitorePiva", "");
+			json.put("numeroFattura", "");
+			json.put("dataFattura", "");
+			json.put("annoFattura", "");
+			json.put("dataProtocollo", "");
+			json.put("sezionaleIva", "");
+			json.put("tipoDocumento", "");
+			json.put("numeroProtocollo", "");
+			json.put("fornitoreDenominazione", "");
+		} catch (JSONException e) {
+			json = null;
+			e.printStackTrace(Trace.excStream);
+		} catch (FileNotFoundException e) {
+			json = null;
+			e.printStackTrace(Trace.excStream);
+		}
+		return json;
 	}
 }

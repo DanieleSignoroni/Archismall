@@ -1,5 +1,6 @@
 package it.softre.thip.archismall.trasmissione;
 
+import java.io.FileNotFoundException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,6 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+
+import org.json.JSONObject;
 
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.batch.BatchRunnable;
@@ -58,11 +61,10 @@ public class PacchetttoTrasmissioneInvio extends BatchRunnable implements Author
 				List<SubmissionPackDett> submissionPackages = pacchetto.submissionPacksDettaglioDaPacchetto();
 				for(SubmissionPackDett submissionPack : submissionPackages) {
 					String endpoint = submissionPack.getEndpointDaTipoDocumento();
-					//ora qui chiamo l'api con il tipo doc
-					
+					JSONObject json = submissionPack.getJSONVersamento();
 					//se 401 allora rinnovo il token
 				}
-				pacchetto.setStatoPacchetto(PacchetttoTrasmissione.PROCESSATO);
+				//pacchetto.setStatoPacchetto(PacchetttoTrasmissione.PROCESSATO);
 				try {
 					int rc = pacchetto.save();
 					if(rc > 0)

@@ -35,7 +35,7 @@ public class ArchismallUtils {
 	public enum TipoDocumentiAttivo {
 		TD01,TD02,TD03,TD04,TD05,TD24,TD25; 
 
-		private static final Set<String> tipiDocumentoAttivi = new HashSet<String>(Arrays.asList("T01","T02","T03","T04","T05","T24","T25"));
+		private static final Set<String> tipiDocumentoAttivi = new HashSet<String>(Arrays.asList("TD01","TD02","TD03","TD04","TD05","TD24","TD25"));
 
 		public static boolean contains(String code) {
 			return tipiDocumentoAttivi.contains(code);
@@ -51,7 +51,7 @@ public class ArchismallUtils {
 	public enum TipoDocumentoPassivo {
 		T06,TD16,TD17,TD18,TD19; 
 
-		private static final Set<String> tipiDocumentoPassivi = new HashSet<String>(Arrays.asList("T06", "TD16", "TD17", "TD18", "TD19"));
+		private static final Set<String> tipiDocumentoPassivi = new HashSet<String>(Arrays.asList("TD06", "TD16", "TD17", "TD18", "TD19"));
 
 		public static boolean contains(String code) {
 			return tipiDocumentoPassivi.contains(code);
