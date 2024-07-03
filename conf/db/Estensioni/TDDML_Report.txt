@@ -1,4 +1,2 @@
 
-Elaborazione file comandi W:\PthDev\Projects\Panthera\Archismall\conf\db\Estensioni\00003\tddml\3_CONSTRAINT.TDDML.
-ALTER TABLE SOFTRE.CONFIGURAZIONE_ARCHISMALL ADD CONSTRAINT Azienda_1204605380 FOREIGN KEY (ID_AZIENDA)
-        REFERENCES THIP.AZIENDE_ESTESE
+Elaborazione file comandi W:\PthDev\Projects\Panthera\Archismall\conf\db\Estensioni\00002\tddml\2_CONSTRAINT.TDDML.

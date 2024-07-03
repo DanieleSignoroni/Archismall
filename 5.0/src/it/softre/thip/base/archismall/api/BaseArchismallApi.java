@@ -30,6 +30,8 @@ import it.thera.thip.base.azienda.Azienda;
  * <li>{@link #token}, un wrapper del token di autenticazione fornito dopo il login, che verra' usato per le future chiamate e rinfrescato alla necessita'</li>
  * <li>Alcune variabili finali che contengono gli endpoint generici usati dal programma di interscambio</li>
  * </list>
+ * <br>
+ * La classe vorrebbe essere single instance, quindi dovrebbe essere usata tramite metodo {@link #getInstance()}.<br></br>
  * <h1>Softre Solutions</h1>
  * <br>
  * @author Daniele Signoroni 15/05/2024
@@ -78,17 +80,17 @@ public class BaseArchismallApi {
 	}
 
 	public BaseArchismallApi() {
-		initializeConfiguration();
+		init();
 	}
 
 	/**
 	 * @author Daniele Signoroni 15/05/2024
 	 * <p>
 	 * Prima stesura.<br>
-	 * Inizializza la configurazione, recuperandola dall'azienda corrente.<br>Z
+	 * Inizializza la configurazione, recuperandola dall'azienda corrente.<br>
 	 * </p>
 	 */
-	protected void initializeConfiguration() {
+	protected void init() {
 		try {
 			setConfigurazioneArchismall((ConfigurazioneArchismall) 
 					ConfigurazioneArchismall.elementWithKey(ConfigurazioneArchismall.class, Azienda.getAziendaCorrente(), PersistentObject.NO_LOCK));
@@ -107,7 +109,7 @@ public class BaseArchismallApi {
 	 * </p>
 	 * @return
 	 */
-	protected String getFormattedURL() {
+	public String getFormattedBaseURL() {
 		String url = null;
 		if(getConfigurazioneArchismall() == null) 
 			return null;
@@ -170,16 +172,18 @@ public class BaseArchismallApi {
 	 */
 	public void valorizzaTokenAuthentication() throws Exception {
 		WrapperJSON wj = (WrapperJSON) WrapperJSON.getInstance();
-		String[] result = wj.sendPost(getFormattedURL() + AUTH_ENDPOINT, getBaseParametersForAuthentication("password"), getBasicAuthorization());
+		String[] result = wj.sendPost(getFormattedBaseURL() + AUTH_ENDPOINT, getBaseParametersForAuthentication("password"), getBasicAuthorization());
 		String out = null;
-		if (result[0].equals(Status.OK.toString())) {
+		if (result[0].equals(String.valueOf(Status.OK.getStatusCode()))) {
 			out = result[1];
 			JSONObject response = new JSONObject(out);
 			Gson gson = new GsonBuilder().create();
 			Token token = gson.fromJson(response.toString(), Token.class);
 			setToken(token);;
 		} else {
-			throw new PantheraApiException(Status.fromStatusCode(Integer.valueOf(result[0].toString())),"Impossibile autenticarsi verso Archismall");
+			throw new PantheraApiException(
+					Status.fromStatusCode(Integer.valueOf(result[0].toString())),
+					"Impossibile autenticarsi verso Archismall");
 		}
 	}
 
@@ -224,7 +228,7 @@ public class BaseArchismallApi {
 		WebServiceUtilsTherm wj = WebServiceUtilsTherm.getInstance();
 		String[] result = wj.sendGet(url, parameters, properties);
 		//se 401 allora magari il token e' expired, quindi lo ricarico e rifaccio la request
-		if(result[0].equals(Status.UNAUTHORIZED.toString())) {
+		if(result[0].equals(String.valueOf(Status.UNAUTHORIZED.getStatusCode()))) {
 			valorizzaTokenAuthentication();
 			result = wj.sendGet(url, parameters, properties);
 		}
@@ -256,7 +260,7 @@ public class BaseArchismallApi {
 		WebServiceUtilsTherm wj = WebServiceUtilsTherm.getInstance();
 		String[] result = wj.sendPost(url, parameters, properties);
 		//se 401 allora magari il token e' expired, quindi lo ricarico e rifaccio la request
-		if(result[0].equals(Status.UNAUTHORIZED.toString())) {
+		if(result[0].equals(String.valueOf(Status.UNAUTHORIZED.getStatusCode()))) {
 			valorizzaTokenAuthentication();
 			result = wj.sendPost(url, parameters, properties);
 		}
@@ -290,7 +294,7 @@ public class BaseArchismallApi {
 		WebServiceUtilsTherm wj = WebServiceUtilsTherm.getInstance();
 		String[] result = wj.sendJSON(method, url, json, asBody,properties);
 		//se 401 allora magari il token e' expired, quindi lo ricarico e rifaccio la request
-		if(result[0].equals(Status.UNAUTHORIZED.toString())) {
+		if(result[0].equals(String.valueOf(Status.UNAUTHORIZED.getStatusCode()))) {
 			valorizzaTokenAuthentication();
 			result = wj.sendJSON(method, url, json, asBody);
 		}

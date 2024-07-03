@@ -1,428 +1,151 @@
-/*
- * @(#)ConfigurazioneArchismallPO.java
- */
-
-/**
- * null
- *
- * <br></br><b>Copyright (C) : Thera SpA</b>
- * @author Wizard 15/05/2024 at 12:11:50
- */
-/*
- * Revisions:
- * Date          Owner      Description
- * 15/05/2024    Wizard     Codice generato da Wizard
- *
- */
 package it.softre.thip.archismall.base.configuration;
-import com.thera.thermfw.persist.*;
-import java.sql.*;
-import java.util.*;
-import it.thera.thip.base.azienda.AziendaEstesa;
-import it.thera.thip.cs.*;
-import com.thera.thermfw.common.*;
+
+import java.sql.SQLException;
+import java.util.Vector;
+
+import com.thera.thermfw.common.BaseComponentsCollection;
+import com.thera.thermfw.common.BusinessObject;
+import com.thera.thermfw.common.Deletable;
+import com.thera.thermfw.persist.CopyException;
+import com.thera.thermfw.persist.Copyable;
+import com.thera.thermfw.persist.Factory;
+import com.thera.thermfw.persist.KeyHelper;
+import com.thera.thermfw.persist.PersistentObject;
+import com.thera.thermfw.persist.TableManager;
+import com.thera.thermfw.security.Authorizable;
+import com.thera.thermfw.security.Conflictable;
+
 import it.thera.thip.base.azienda.Azienda;
-import com.thera.thermfw.security.*;
+import it.thera.thip.cs.EntitaAzienda;
 
-public abstract class ConfigurazioneArchismallPO extends EntitaAzienda implements BusinessObject, Authorizable, Deletable, Conflictable {
+public abstract class ConfigurazioneArchismallPO extends EntitaAzienda
+		implements BusinessObject, Authorizable, Deletable, Conflictable {
 
-  
-  /**
-   *  instance
-   */
-  private static ConfigurazioneArchismall cInstance;
+	private static ConfigurazioneArchismall cInstance;
 
-  /**
-   * Attributo iUrl
-   */
-  protected String iUrl;
+	protected String iUrl;
 
-  /**
-   * Attributo iClientSecret
-   */
-  protected String iClientSecret;
+	protected String iClientSecret;
 
-  /**
-   * Attributo iClientId
-   */
-  protected String iClientId;
+	protected String iClientId;
 
-  /**
-   * Attributo iIdUtente
-   */
-  protected String iIdUtente;
+	protected String iIdUtente;
 
-  /**
-   * Attributo iPassword
-   */
-  protected String iPassword;
+	protected String iPassword;
 
-  /**
-   * Attributo iToken
-   */
-  protected String iToken;
+	protected String iToken;
 
-  
-  /**
-   *  retrieveList
-   * @param where
-   * @param orderBy
-   * @param optimistic
-   * @return Vector
-   * @throws SQLException
-   * @throws ClassNotFoundException
-   * @throws InstantiationException
-   * @throws IllegalAccessException
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    CodeGen     Codice generato da CodeGenerator
-   *
-   */
-  public static Vector retrieveList(String where, String orderBy, boolean optimistic) throws SQLException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-    if (cInstance == null)
-      cInstance = (ConfigurazioneArchismall)Factory.createObject(ConfigurazioneArchismall.class);
-    return PersistentObject.retrieveList(cInstance, where, orderBy, optimistic);
-  }
+	@SuppressWarnings("rawtypes")
+	public static Vector retrieveList(String where, String orderBy, boolean optimistic)
+			throws SQLException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+		if (cInstance == null)
+			cInstance = (ConfigurazioneArchismall) Factory.createObject(ConfigurazioneArchismall.class);
+		return PersistentObject.retrieveList(cInstance, where, orderBy, optimistic);
+	}
 
-  /**
-   *  elementWithKey
-   * @param key
-   * @param lockType
-   * @return ConfigurazioneArchismall
-   * @throws SQLException
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    CodeGen     Codice generato da CodeGenerator
-   *
-   */
-  public static ConfigurazioneArchismall elementWithKey(String key, int lockType) throws SQLException {
-    return (ConfigurazioneArchismall)PersistentObject.elementWithKey(ConfigurazioneArchismall.class, key, lockType);
-  }
+	public static ConfigurazioneArchismall elementWithKey(String key, int lockType) throws SQLException {
+		return (ConfigurazioneArchismall) PersistentObject.elementWithKey(ConfigurazioneArchismall.class, key,
+				lockType);
+	}
 
-  /**
-   * ConfigurazioneArchismallPO
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public ConfigurazioneArchismallPO() {
-    setIdAzienda(Azienda.getAziendaCorrente());
-  }
+	public ConfigurazioneArchismallPO() {
+		setIdAzienda(Azienda.getAziendaCorrente());
+	}
 
-  /**
-   * Valorizza l'attributo. 
-   * @param url
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public void setUrl(String url) {
-    this.iUrl = url;
-    setDirty();
-  }
+	public void setUrl(String url) {
+		this.iUrl = url;
+		setDirty();
+	}
 
-  /**
-   * Restituisce l'attributo. 
-   * @return String
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public String getUrl() {
-    return iUrl;
-  }
+	public String getUrl() {
+		return iUrl;
+	}
 
-  /**
-   * Valorizza l'attributo. 
-   * @param clientSecret
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public void setClientSecret(String clientSecret) {
-    this.iClientSecret = clientSecret;
-    setDirty();
-  }
+	public void setClientSecret(String clientSecret) {
+		this.iClientSecret = clientSecret;
+		setDirty();
+	}
 
-  /**
-   * Restituisce l'attributo. 
-   * @return String
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public String getClientSecret() {
-    return iClientSecret;
-  }
+	public String getClientSecret() {
+		return iClientSecret;
+	}
 
-  /**
-   * Valorizza l'attributo. 
-   * @param clientId
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public void setClientId(String clientId) {
-    this.iClientId = clientId;
-    setDirty();
-  }
+	public void setClientId(String clientId) {
+		this.iClientId = clientId;
+		setDirty();
+	}
 
-  /**
-   * Restituisce l'attributo. 
-   * @return String
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public String getClientId() {
-    return iClientId;
-  }
+	public String getClientId() {
+		return iClientId;
+	}
 
-  /**
-   * Valorizza l'attributo. 
-   * @param idUtente
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public void setIdUtente(String idUtente) {
-    this.iIdUtente = idUtente;
-    setDirty();
-  }
+	public void setIdUtente(String idUtente) {
+		this.iIdUtente = idUtente;
+		setDirty();
+	}
 
-  /**
-   * Restituisce l'attributo. 
-   * @return String
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public String getIdUtente() {
-    return iIdUtente;
-  }
+	public String getIdUtente() {
+		return iIdUtente;
+	}
 
-  /**
-   * Valorizza l'attributo. 
-   * @param password
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public void setPassword(String password) {
-    this.iPassword = password;
-    setDirty();
-  }
+	public void setPassword(String password) {
+		this.iPassword = password;
+		setDirty();
+	}
 
-  /**
-   * Restituisce l'attributo. 
-   * @return String
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public String getPassword() {
-    return iPassword;
-  }
+	public String getPassword() {
+		return iPassword;
+	}
 
-  /**
-   * Valorizza l'attributo. 
-   * @param token
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public void setToken(String token) {
-    this.iToken = token;
-    setDirty();
-  }
+	public void setToken(String token) {
+		this.iToken = token;
+		setDirty();
+	}
 
-  /**
-   * Restituisce l'attributo. 
-   * @return String
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public String getToken() {
-    return iToken;
-  }
+	public String getToken() {
+		return iToken;
+	}
 
-  /**
-   * Valorizza l'attributo. 
-   * @param idAzienda
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public void setIdAzienda(String idAzienda) {
-    iAzienda.setKey(idAzienda);
-    setDirty();
-    setOnDB(false);
-  }
+	public void setIdAzienda(String idAzienda) {
+		iAzienda.setKey(idAzienda);
+		setDirty();
+		setOnDB(false);
+	}
 
-  /**
-   * Restituisce l'attributo. 
-   * @return String
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public String getIdAzienda() {
-    String key = iAzienda.getKey();
-    return key;
-  }
+	public String getIdAzienda() {
+		String key = iAzienda.getKey();
+		return key;
+	}
 
-  /**
-   * setEqual
-   * @param obj
-   * @throws CopyException
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public void setEqual(Copyable obj) throws CopyException {
-    super.setEqual(obj);
-  }
+	public void setEqual(Copyable obj) throws CopyException {
+		super.setEqual(obj);
+	}
 
-  /**
-   * checkAll
-   * @param components
-   * @return Vector
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public Vector checkAll(BaseComponentsCollection components) {
-    Vector errors = new Vector();
-    components.runAllChecks(errors);
-    return errors;
-  }
+	@SuppressWarnings("rawtypes")
+	public Vector checkAll(BaseComponentsCollection components) {
+		Vector errors = new Vector();
+		components.runAllChecks(errors);
+		return errors;
+	}
 
-  /**
-   *  setKey
-   * @param key
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public void setKey(String key) {
-    setIdAzienda(key);
-  }
+	public void setKey(String key) {
+		setIdAzienda(key);
+	}
 
-  /**
-   *  getKey
-   * @return String
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public String getKey() {
-    return getIdAzienda();
-  }
+	public String getKey() {
+		return getIdAzienda();
+	}
 
-  /**
-   * isDeletable
-   * @return boolean
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public boolean isDeletable() {
-    return checkDelete() == null;
-  }
+	public boolean isDeletable() {
+		return checkDelete() == null;
+	}
 
-  /**
-   * toString
-   * @return String
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    Wizard     Codice generato da Wizard
-   *
-   */
-  public String toString() {
-    return getClass().getName() + " [" + KeyHelper.formatKeyString(getKey()) + "]";
-  }
+	public String toString() {
+		return getClass().getName() + " [" + KeyHelper.formatKeyString(getKey()) + "]";
+	}
 
-  /**
-   *  getTableManager
-   * @return TableManager
-   * @throws SQLException
-   */
-  /*
-   * Revisions:
-   * Date          Owner      Description
-   * 15/05/2024    CodeGen     Codice generato da CodeGenerator
-   *
-   */
-  protected TableManager getTableManager() throws SQLException {
-    return ConfigurazioneArchismallTM.getInstance();
-  }
+	protected TableManager getTableManager() throws SQLException {
+		return ConfigurazioneArchismallTM.getInstance();
+	}
 
 }
-

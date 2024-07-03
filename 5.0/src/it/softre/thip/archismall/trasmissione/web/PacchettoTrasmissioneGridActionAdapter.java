@@ -2,6 +2,7 @@ package it.softre.thip.archismall.trasmissione.web;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -15,8 +16,7 @@ import com.thera.thermfw.web.WebToolBar;
 import com.thera.thermfw.web.WebToolBarButton;
 import com.thera.thermfw.web.servlet.GridActionAdapter;
 
-import it.softre.thip.archismall.trasmissione.PacchetttoTrasmissione;
-import it.thera.thip.crm.anagrMarketing.web.SegmentazioneMktgHelper;
+import it.softre.thip.archismall.trasmissione.PacchettoTrasmissione;
 
 /**
  * <h1>Softre Solutions</h1>
@@ -29,7 +29,7 @@ import it.thera.thip.crm.anagrMarketing.web.SegmentazioneMktgHelper;
  * </p>
  */
 
-public class PacchetttoTrasmissioneGridActionAdapter extends GridActionAdapter {
+public class PacchettoTrasmissioneGridActionAdapter extends GridActionAdapter {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -47,7 +47,7 @@ public class PacchetttoTrasmissioneGridActionAdapter extends GridActionAdapter {
 		toolBar.removeButton("New");
 		toolBar.removeButton("Open");
 		toolBar.removeButton("Copy");
-		toolBar.removeButton("Delete");
+		//toolBar.removeButton("Delete");
 		toolBar.removeButton("View");
 		toolBar.removeButton("NavDocDgt");
 
@@ -96,7 +96,6 @@ public class PacchetttoTrasmissioneGridActionAdapter extends GridActionAdapter {
 		menuBar.removeMenu("SelectedMenu.View");
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	protected void otherActions(ClassADCollection cadc, ServletEnvironment se) throws ServletException, IOException {
 		String action = se.getRequest().getParameter(ACTION);
@@ -104,9 +103,13 @@ public class PacchetttoTrasmissioneGridActionAdapter extends GridActionAdapter {
 			replicaPacchetti();
 			callShowGrid(se);
 		}else if(action.equals(INVIA_PACCHETTO)) {
-			List lstChiaviSelected = SegmentazioneMktgHelper.getChiaviSelected(cadc, se);
+			List<String> lstChiaviSelected = new ArrayList<String>();
+			String[] keys = se.getRequest().getParameterValues(GridActionAdapter.OBJECT_KEY);
+			for(String key : keys) {
+				lstChiaviSelected.add(key);
+			}
 			se.getRequest().setAttribute("lstChiaviSelected", lstChiaviSelected);
-			se.sendRequest(getServletContext(),"it/softre/thip/archismall/trasmissione/PacchetttoTrasmissioneInvio.jsp", true);
+			se.sendRequest(getServletContext(),"it/softre/thip/archismall/trasmissione/PacchettoTrasmissioneInvio.jsp", true);
 		}else {
 			super.otherActions(cadc, se);
 		}
@@ -115,7 +118,7 @@ public class PacchetttoTrasmissioneGridActionAdapter extends GridActionAdapter {
 
 	protected void replicaPacchetti() {
 		try {
-			int ris = PacchetttoTrasmissione.replicaPacchettiFP();
+			int ris = PacchettoTrasmissione.replicaPacchettiFP();
 			if(ris < 0) {
 				ConnectionManager.rollback();
 			}else {

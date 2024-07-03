@@ -1,13 +1,17 @@
 package it.softre.thip.archismall.trasmissione.web;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
 import javax.servlet.jsp.JspWriter;
 
+import com.thera.thermfw.base.Trace;
+import com.thera.thermfw.persist.PersistentObject;
 import com.thera.thermfw.web.WebFormModifier;
 
-import it.softre.thip.archismall.trasmissione.PacchetttoTrasmissioneInvio;
+import it.softre.thip.archismall.trasmissione.PacchettoTrasmissione;
+import it.softre.thip.archismall.trasmissione.PacchettoTrasmissioneInvio;
 import it.thera.thip.cs.ColonneFiltri;
 
 public class PacchettoTrasmissioneInvioFormModifier extends WebFormModifier {
@@ -34,7 +38,7 @@ public class PacchettoTrasmissioneInvioFormModifier extends WebFormModifier {
 			getBODataCollector().setOnBORecursive();
 			java.util.Iterator lstChiaviSelectedIte = ( java.util.Iterator)lstChiaviSelected.iterator();
 			String keysSel = "";
-			PacchetttoTrasmissioneInvio myBatch = (PacchetttoTrasmissioneInvio)getBODataCollector().getBo();
+			PacchettoTrasmissioneInvio myBatch = (PacchettoTrasmissioneInvio)getBODataCollector().getBo();
 			while (lstChiaviSelectedIte.hasNext()) {
 				String nextKey = (String)lstChiaviSelectedIte.next();
 				keysSel += nextKey;
@@ -49,7 +53,18 @@ public class PacchettoTrasmissioneInvioFormModifier extends WebFormModifier {
 
 	@Override
 	public void writeFormEndElements(JspWriter out) throws IOException {
-
+		PacchettoTrasmissione packet;
+		try {
+			packet = (PacchettoTrasmissione) PacchettoTrasmissione.elementWithKey(
+					PacchettoTrasmissione.class, ((PacchettoTrasmissioneInvio)getBODataCollector().getBo()).getChiaviSelezionati().toString(), PersistentObject.NO_LOCK);
+			if(packet != null) {
+				out.println("<script language=\"javascript1.2\">");
+				out.println("document.getElementById('descr').innerHTML = '"+(packet.getIdLancio()+"\\ ---- "+packet.getDescrizione())+"';");
+				out.println("</script>");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace(Trace.excStream);
+		}
 	}
 
 	@Override

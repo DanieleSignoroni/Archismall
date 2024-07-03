@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Base64;
 
 import org.json.JSONException;
@@ -12,10 +14,13 @@ import org.json.JSONObject;
 
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.base.Utils;
+import com.thera.thermfw.persist.CachedStatement;
 
+import it.softre.thip.archismall.base.generale.ArchismallUtils;
 import it.softre.thip.archismall.base.generale.ArchismallUtils.TipoDocumentiAttivo;
 import it.softre.thip.archismall.base.generale.ArchismallUtils.TipoDocumentoPassivo;
 import it.softre.thip.base.archismall.api.BaseArchismallApi;
+import it.thera.thip.cs.ThipException;
 
 public class SubmissionPackDett {
 
@@ -209,13 +214,25 @@ public class SubmissionPackDett {
 		this.f9iupri = f9iupri;
 	}
 
+	/**
+	 * Tramite il {@link #tipoDoc}, ritorna l'URL di chiamata verso Archismall.<br>
+	 * Base URL + endpoint.<br>
+	 * Se il tipo documento e' null o non rientra in quelli registrati qui {@link ArchismallUtils}, allora ritorna null.
+	 * @author Daniele Signoroni 20/05/2024
+	 * <p>
+	 * Prima stesura.<br>
+	 *
+	 * </p>
+	 * @return
+	 */
 	public String getEndpointDaTipoDocumento() {
+		String baseURL = BaseArchismallApi.getInstance().getFormattedBaseURL();
 		if(getTipoDoc() == null)
 			return null;
 		if(TipoDocumentiAttivo.contains(getTipoDoc())) {
-			return BaseArchismallApi.CONSERVAZIONE_ATTIVA_VERSAMENTO_ENDPOINT;
+			return baseURL + BaseArchismallApi.CONSERVAZIONE_ATTIVA_VERSAMENTO_ENDPOINT;
 		}else if(TipoDocumentoPassivo.contains(getTipoDoc())) {
-			return BaseArchismallApi.CONSERVAZIONE_PASSIVA_VERSAMENTO_ENDPOINT;
+			return baseURL + BaseArchismallApi.CONSERVAZIONE_PASSIVA_VERSAMENTO_ENDPOINT;
 		}else {
 			return null;
 		}
@@ -252,21 +269,28 @@ public class SubmissionPackDett {
 		return new String (Base64.getEncoder().encode(bytes));
 	}
 
-	public JSONObject getJSONVersamento() {
+	public JSONObject getJSONVersamento() throws ThipException {
 		JSONObject json = new JSONObject();
 		try {
+			SubmissionPackMetadata metadati = recuperaMetadati("THIP.F9IVA00K");
+			if(metadati == null) {
+				throw new ThipException("Impossibile trovare i metadati per la fattura "+getNumero()+"\\"+getDataDoc());
+			}
 			json.put("file", getFileJSONObject());
 			//ora ci aggiungiamo tutto il resto 
-			json.put("idArchiPro", "");
-			json.put("fornitorePiva", "");
-			json.put("numeroFattura", "");
-			json.put("dataFattura", "");
-			json.put("annoFattura", "");
-			json.put("dataProtocollo", "");
-			json.put("sezionaleIva", "");
-			json.put("tipoDocumento", "");
-			json.put("numeroProtocollo", "");
-			json.put("fornitoreDenominazione", "");
+			if(TipoDocumentiAttivo.contains(getTipoDoc()))
+				json.put("idArchiPro", "SOFTRE_FATATT_"+metadati.getF9IAFES().trim());
+			else
+				json.put("idArchiPro", "SOFTRE_FATPASS_"+metadati.getF9IAFES().trim());
+			json.put("fornitorePiva", getPiva().trim());
+			json.put("numeroFattura", getNumero().trim());
+			json.put("dataFattura", getDataDoc());
+			json.put("annoFattura", metadati.getF9IAFES().trim());
+			json.put("dataProtocollo", metadati.getF9IUPRI());
+			json.put("sezionaleIva", metadati.getF9ICREG().trim());
+			json.put("tipoDocumento", getTipoDoc());
+			json.put("numeroProtocollo", metadati.getF9INPRI().trim());
+			json.put("fornitoreDenominazione", metadati.getF9IDRSO().trim());
 		} catch (JSONException e) {
 			json = null;
 			e.printStackTrace(Trace.excStream);
@@ -275,5 +299,38 @@ public class SubmissionPackDett {
 			e.printStackTrace(Trace.excStream);
 		}
 		return json;
+	}
+
+	public SubmissionPackMetadata recuperaMetadati(String nomeTabella) {
+		SubmissionPackMetadata metadata = null;
+		String stmt = " SELECT * FROM "+nomeTabella+" WHERE F9INDOC = '"+getNumero()+"' AND F9IUDOC = '"+getDataDoc()+"' ";
+		ResultSet rs = null;
+		CachedStatement cs = null;
+		SubmissionPackMetadataRsIterator rsIterator = null;
+		try {
+			cs = new CachedStatement(stmt);
+			rs = cs.executeQuery();
+			rsIterator = new SubmissionPackMetadataRsIterator(rs);
+			while(rsIterator.hasNext()) {
+				metadata = (SubmissionPackMetadata) rsIterator.next();
+			}
+		}catch (SQLException e) {
+			e.printStackTrace(Trace.excStream);
+		}finally {
+			try {
+				if(cs != null) {
+					cs.free();
+				}
+				if(rsIterator != null) {
+					rsIterator.closeCursor();
+				}
+			}catch (SQLException e) {
+				e.printStackTrace(Trace.excStream);
+			}
+		}
+		if(metadata == null) {
+			return recuperaMetadati("FP.F9IVA00K");
+		}
+		return metadata;
 	}
 }

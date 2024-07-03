@@ -7,7 +7,12 @@ import java.util.Set;
 import com.thera.thermfw.persist.Factory;
 
 /**
- * Contiene alcune utilita' per l'integrazione tra Panthera e Archismall.
+ * Contiene alcune utilita' per l'integrazione tra Panthera e Archismall.<br></br>
+ * Contiene due enumerati utili per determinate se un pacchetto e' attivo o passivo:
+ * <list>
+ * 	<li>{@link TipoDocumentiAttivo}</li>
+ *  <li>{@link TipoDocumentoPassivo}</li>
+ * </list>
  * <h1>Softre Solutions</h1>
  * <br>
  * @author Daniele Signoroni 15/05/2024

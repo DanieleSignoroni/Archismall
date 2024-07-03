@@ -126,14 +126,15 @@
 </td></tr>
 			<tr>
 				<td>
-					<table width="100%">	
+					<table width="100%">
+					        <tr><td><label id="descr"></label></td></tr>	
             				<tr>
-							<td>	<% 
+							<td><% 
   WebTextInput PachettoTraInvioChiaviSelezionati =  
      new com.thera.thermfw.web.WebTextInput("PachettoTraInvio", "ChiaviSelezionati"); 
   PachettoTraInvioChiaviSelezionati.setParent(PachettoTraInvioForm); 
 %>
-<input class="<%=PachettoTraInvioChiaviSelezionati.getClassType()%>" id="<%=PachettoTraInvioChiaviSelezionati.getId()%>" maxlength="<%=PachettoTraInvioChiaviSelezionati.getMaxLength()%>" name="<%=PachettoTraInvioChiaviSelezionati.getName()%>" size="<%=PachettoTraInvioChiaviSelezionati.getSize()%>" type="hidden"><% 
+<input class="<%=PachettoTraInvioChiaviSelezionati.getClassType()%>" id="<%=PachettoTraInvioChiaviSelezionati.getId()%>" maxlength="<%=PachettoTraInvioChiaviSelezionati.getMaxLength()%>" name="<%=PachettoTraInvioChiaviSelezionati.getName()%>" readonly size="<%=PachettoTraInvioChiaviSelezionati.getSize()%>"><% 
   PachettoTraInvioChiaviSelezionati.write(out); 
 %>
 </td>
