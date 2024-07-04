@@ -1,0 +1,7 @@
+<B>2024-07-04 10:21:26</B>
+<BR>Il dizionario <B>PACCHETTO_INVIATO</B> è stato cancellato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\Archismall\conf\db\Estensioni\00004\tddml\4_DROP_PACCHETTO_INVIATO.TDDML</B> e' stato generato correttamente.
+<BR>Il dizionario <B>PACCHETTO_INVIATO</B> è stato creato
+<BR>Il file <B>W:\PthDev\Projects\Panthera\Archismall\conf\db\Estensioni\00004\tddml\4_PACCHETTO_INVIATO.TDDML</B> e' stato generato correttamente.
+<BR>Il file <B>W:\PthDev\Projects\Panthera\Archismall\conf\db\Estensioni\00004\tddml\4_CONSTRAINT.TDDML</B> e' stato generato correttamente.
+<BR><B>La generazione tabella è completata con successo</B><BR>

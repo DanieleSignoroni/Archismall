@@ -15,6 +15,8 @@ import org.json.JSONObject;
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.batch.BatchRunnable;
 import com.thera.thermfw.persist.ConnectionManager;
+import com.thera.thermfw.persist.Factory;
+import com.thera.thermfw.persist.KeyHelper;
 import com.thera.thermfw.persist.PersistentObject;
 import com.thera.thermfw.rs.errors.PantheraApiException;
 import com.thera.thermfw.security.Authorizable;
@@ -55,6 +57,7 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 
 	@SuppressWarnings("rawtypes")
 	protected boolean invaPacchettiVersoArchismall() {
+		boolean result = true;
 		output.println(" --> Recupero la lista di pacchetti da inviare... ");
 		List<PacchettoTrasmissione> pacchetti = recuperaListaPacchettiDaSelezionati(getChiaviSelezionati());
 		if(pacchetti.size() > 0) {
@@ -101,39 +104,83 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 							}
 						}
 						String endpoint = submissionPack.getEndpointDaTipoDocumento();
+						if(endpoint == null) {
+							output.println(" --> Per il Tipo Documento : "+submissionPack.getTipoDoc()+", il sistema non ha determinato se passivo/attivo ");
+							continue;
+						}
 						JSONObject json;
 						try {
 							json = submissionPack.getJSONVersamento();
 							if(endpoint != null && json != null && !json.isEmpty()) {
-								//Di seguito la chiamta tramite classe di util
 
-								Map headers = new java.util.HashMap<String,String>();
-								try {
-									JSONObject response = BaseArchismallApi.getInstance().sendJSON("POST", endpoint, json.toString(), true, headers);
-									String statusCode = response.getString("status");
-									if(statusCode.equals("400")) {
-										output.println(" --> Pacchetto:"+submissionPack.getId()+", inviato verso Archismall con errori, status code ="+statusCode);
-										output.println(" --> JSON:"+json.toString());
+								String key = KeyHelper.buildObjectKey(new String[] {
+										submissionPack.getIdLancio().trim(),
+										String.valueOf(submissionPack.getId()),
+										(String) json.get("idArchiPro")
+								});
+								PacchettoInviato pacchettoInviato = (PacchettoInviato) Factory.createObject(PacchettoInviato.class);
+								pacchettoInviato.setKey(key);
+								boolean inviato = pacchettoInviato.retrieve();
+								boolean daInviare = true;
+								//Non e' da inviare se e' presente il record con stato = PROCESSATO
+								if(inviato && pacchettoInviato.getStatoPacchetto() == PacchettoTrasmissione.PROCESSATO) {
+									daInviare = false;
+								}
+								if(daInviare) {
+									Map headers = new java.util.HashMap<String,String>();
+									try {
+										JSONObject response = BaseArchismallApi.getInstance().sendJSON("POST", endpoint, json.toString(), true, headers);
+										String statusCode = response.getString("status");
+										if(!statusCode.equals("200")) {
+											String errors = (String) (response.has("errors") ? response.get("errors") : ""); 
+											if(!errors.isEmpty()) {
+												JSONObject jsonObject = new JSONObject(errors);
+												String message = jsonObject.has("message") ? jsonObject.getString("message") : null;
+												if(message != null && !message.contains("Document already uploaded")) {
+													//output.println(" --> Pacchetto:"+submissionPack.getId()+", inviato verso Archismall con errori: \n "+message);
+												}else if(message != null && message.contains("Document already uploaded")){
+													pacchettoInviato.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
+												}
+												pacchettoInviato.setDescrErrore(message);
+											}else {
+												//output.println(" --> Pacchetto:"+submissionPack.getId()+", inviato verso Archismall con status: \n "+statusCode);
+											}
+										}
+
+										//Registro il pacchetto come inviato o non inviato
+										if(statusCode.equals("200")) 
+											pacchettoInviato.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
+										int rc = pacchettoInviato.save();
+										if(rc >= 0) {
+											ConnectionManager.commit();
+										}else {
+											ConnectionManager.rollback();
+										}
+
+									} catch (Exception e) {
+										if(e instanceof PantheraApiException) {
+											if(e.getMessage().contains("Impossibile autenticarsi")) {
+												output.println(e.getMessage());
+												return false;
+											}
+										}
+										e.printStackTrace(Trace.excStream);
 									}
-								} catch (Exception e) {
-									if(e instanceof PantheraApiException) {
-										e.getMessage().contains("Impossibile autenticarsi");
-										output.println(e.getMessage());
-										return false;
-									}
-									e.printStackTrace(Trace.excStream);
+								}else {
+									//gia inviato
 								}
 							}
-							//vediamo se ok
 						} catch (ThipException e) {
 							//non ci sono i metadati
+							output.println(" --> Pacchetto processato con errore : "+e.getMessage());
 							e.printStackTrace(Trace.excStream);
+						} catch (SQLException e1) {
+							e1.printStackTrace(Trace.excStream);
 						}
-
-						
 					}
 				}
-				//pacchetto.setStatoPacchetto(PacchetttoTrasmissione.PROCESSATO);
+				//lo stato lo prendo da una MIN su SOFTRE.PACCHETTO_INVIATO
+				pacchetto.setStatoPacchetto(PacchettoInviato.statoInvioPacchettone(pacchetto.getIdLancio()));
 				try {
 					int rc = pacchetto.save();
 					if(rc > 0)
@@ -141,6 +188,8 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 					else
 						ConnectionManager.rollback();
 				} catch (SQLException e) {
+					result = false;
+					output.println(" --> Errore nel salvataggio del pacchettone : "+e.getMessage());
 					e.printStackTrace(Trace.excStream);
 				}
 			}
@@ -148,7 +197,7 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 			output.println(" --> Non ci sono pacchetti da inviare, termino... ");
 			return true;
 		}
-		return false;
+		return result;
 	}
 
 	protected static List<PacchettoTrasmissione> recuperaListaPacchettiDaSelezionati(String chiaviSelezionati){

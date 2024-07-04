@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE TDDML SYSTEM "../../../TDDML.dtd">
+<TDDML>
+  <!-- PACCHETTO_INVIATO (PACCHET): Pachetti inviati; -->
+  <CreateTable schema="SOFTRE" name="PACCHETTO_INVIATO" shortname="PACCHET">
+    <Column name="ID_PACCHETTO" shortname="ID_PACCHET" type="integer" nullable="no"/>
+    <Column name="ID_LANCIO" shortname="ID_LANCIO" type="varchar" length="255" nullable="no"/>
+    <Column name="ID_ARCHI_PRO" shortname="ID_ARCHI_P" type="varchar" length="255" nullable="no"/>
+    <Column name="STATO_PACCHETTO" shortname="STATO_PACC" type="char" length="1" nullable="no" default="0"/>
+    <Column name="STATO_ARCHISMALL" shortname="STATO_ARCH" type="char" length="1" nullable="no" default="0"/>
+    <Column name="DESCR_ERRORE" shortname="DESCR_ERRO" type="varchar" length="1000" nullable="yes"/>
+    <Column name="TIMESTAMP" shortname="TIMESTAMP" type="timestamp" nullable="no" default="CURRENT TIMESTAMP"/>
+  </CreateTable>
+  <CreateIndex schema="SOFTRE" name="PACCHETTO_INVI_I01" tabschema="SOFTRE" tabname="PACCHETTO_INVIATO" shortname="PACCHE_I01" unique="yes">
+    <IndexCol name="ID_LANCIO" order="Asc"/>
+    <IndexCol name="ID_PACCHETTO" order="Asc"/>
+    <IndexCol name="ID_ARCHI_PRO" order="Asc"/>
+  </CreateIndex>
+  <AlterTable schema="SOFTRE" name="PACCHETTO_INVIATO">
+    <AddPrimaryKey>
+      <PrimaryKey>
+        <ColumnRef name="ID_LANCIO"/>
+        <ColumnRef name="ID_PACCHETTO"/>
+        <ColumnRef name="ID_ARCHI_PRO"/>
+      </PrimaryKey>
+    </AddPrimaryKey>
+  </AlterTable>
+  <Comment>
+    <CommentTable schema="SOFTRE" name="PACCHETTO_INVIATO" text="Pachetti inviati">
+      <CommentColumn name="ID_PACCHETTO" text="Id pacchetto"/>
+      <CommentColumn name="ID_LANCIO" text="Codice Lancio"/>
+      <CommentColumn name="ID_ARCHI_PRO" text="Codice archiviazione Archismall"/>
+      <CommentColumn name="STATO_PACCHETTO" text="Stato pacchetto"/>
+      <CommentColumn name="STATO_ARCHISMALL" text="Stato Archismall"/>
+      <CommentColumn name="DESCR_ERRORE" text="Errore importazione"/>
+      <CommentColumn name="TIMESTAMP" text="Timestamp column"/>
+    </CommentTable>
+    <CommentIndex schema="SOFTRE" name="PACCHETTO_INVI_I01" text="Primary Key"/>
+  </Comment>
+  <Grant schema="SOFTRE" name="PACCHETTO_INVIATO"/>
+</TDDML>

@@ -279,9 +279,9 @@ public class SubmissionPackDett {
 			json.put("file", getFileJSONObject());
 			//ora ci aggiungiamo tutto il resto 
 			if(TipoDocumentiAttivo.contains(getTipoDoc()))
-				json.put("idArchiPro", "SOFTRE_FATATT_"+metadati.getF9IAFES().trim());
+				json.put("idArchiPro", "SOFTRE_FATATT_"+metadati.getF9IAFES().trim()+"-"+getId());
 			else
-				json.put("idArchiPro", "SOFTRE_FATPASS_"+metadati.getF9IAFES().trim());
+				json.put("idArchiPro", "SOFTRE_FATPASS_"+metadati.getF9IAFES().trim()+"-"+getId());
 			json.put("fornitorePiva", getPiva().trim());
 			json.put("numeroFattura", getNumero().trim());
 			json.put("dataFattura", getDataDoc());
