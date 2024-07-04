@@ -3,6 +3,7 @@ package it.softre.thip.archismall.trasmissione;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.collections.IteratorUtils;
@@ -62,6 +63,15 @@ public class PacchettoTrasmissione extends PacchettoTrasmissionePO {
 		setStatoPacchetto(NON_PROCESSATO);
 	}
 
+	@Override
+	public int delete() throws SQLException {
+		int rcDel = super.delete();
+		if(rcDel > 0) {
+			//devo anche cancellare tutti i pacchetti figli
+		}
+		return rcDel;
+	}
+
 	/**
 	 * @author Daniele Signoroni 14/05/2024
 	 * <p>
@@ -114,6 +124,20 @@ public class PacchettoTrasmissione extends PacchettoTrasmissionePO {
 			}
 		}
 		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<PacchettoInviato> pacchettiInviati(){
+		List<PacchettoInviato> pacchetti = new ArrayList<PacchettoInviato>();
+		try {
+			pacchetti = PacchettoInviato.retrieveList(PacchettoInviato.class,
+					" "+PacchettoInviatoTM.ID_LANCIO+" = '"+getIdLancio()+"' ",
+					""+PacchettoInviatoTM.ID_PACCHETTO+" ASC ", false);
+		} catch (Exception e) {
+			e.printStackTrace(Trace.excStream);
+		}
+		return pacchetti;
+		
 	}
 
 }

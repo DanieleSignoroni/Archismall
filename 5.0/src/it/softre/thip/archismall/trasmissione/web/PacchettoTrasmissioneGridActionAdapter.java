@@ -10,12 +10,14 @@ import javax.servlet.ServletException;
 import com.thera.thermfw.ad.ClassADCollection;
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.persist.ConnectionManager;
+import com.thera.thermfw.persist.PersistentObject;
 import com.thera.thermfw.web.ServletEnvironment;
 import com.thera.thermfw.web.WebMenuBar;
 import com.thera.thermfw.web.WebToolBar;
 import com.thera.thermfw.web.WebToolBarButton;
 import com.thera.thermfw.web.servlet.GridActionAdapter;
 
+import it.softre.thip.archismall.trasmissione.PacchettoInviato;
 import it.softre.thip.archismall.trasmissione.PacchettoTrasmissione;
 
 /**
@@ -72,7 +74,7 @@ public class PacchettoTrasmissioneGridActionAdapter extends GridActionAdapter {
 		
 		WebToolBarButton inviaPacchettoArchismall = 
 				new WebToolBarButton
-				(REPLICA_PACCHETTI,
+				(INVIA_PACCHETTO,
 						"action_submit",
 						"new",
 						"no",
@@ -83,6 +85,20 @@ public class PacchettoTrasmissioneGridActionAdapter extends GridActionAdapter {
 						"single",
 						false);
 		toolBar.addButton(inviaPacchettoArchismall);
+		
+		WebToolBarButton visualizzaStatoInternal = 
+				new WebToolBarButton
+				("VIS",
+						"action_submit",
+						"new",
+						"no",
+						INVIA_PACCHETTO_RES,
+						"VIS",
+						INVIA_PACCHETTO_IMG,
+						"VIS",
+						"single",
+						false);
+		toolBar.addButton(visualizzaStatoInternal);
 	}
 
 	@Override
@@ -110,6 +126,19 @@ public class PacchettoTrasmissioneGridActionAdapter extends GridActionAdapter {
 			}
 			se.getRequest().setAttribute("lstChiaviSelected", lstChiaviSelected);
 			se.sendRequest(getServletContext(),"it/softre/thip/archismall/trasmissione/PacchettoTrasmissioneInvio.jsp", true);
+		}else if(action.equals("VIS")) {
+			try {
+				PacchettoTrasmissione pacchetto = (PacchettoTrasmissione) 
+						PacchettoTrasmissione.elementWithKey(PacchettoTrasmissione.class, se.getRequest().getParameter(OBJECT_KEY), PersistentObject.NO_LOCK);
+				if(pacchetto != null) {
+					List<PacchettoInviato> pacchettiInviati = pacchetto.pacchettiInviati();
+					se.getRequest().setAttribute("rows", pacchettiInviati);
+					se.getRequest().setAttribute("Pacchetto", pacchetto);
+					se.sendRequest(getServletContext(),"it/softre/thip/archismall/trasmissione/VisualizzaStatoPacchettoInternal.jsp", true);
+				}
+			} catch (SQLException e) {
+				e.printStackTrace(Trace.excStream);
+			}
 		}else {
 			super.otherActions(cadc, se);
 		}

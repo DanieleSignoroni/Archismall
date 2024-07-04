@@ -4,12 +4,15 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.MalformedJsonException;
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.base.util.WebServiceUtils;
 import com.thera.thermfw.base.util.WebServiceUtilsTherm;
@@ -19,6 +22,10 @@ import com.thera.thermfw.persist.PersistentObject;
 import com.thera.thermfw.rs.errors.PantheraApiException;
 
 import it.softre.thip.archismall.base.configuration.ConfigurazioneArchismall;
+import it.thera.thip.api.client.ApiClient;
+import it.thera.thip.api.client.ApiRequest;
+import it.thera.thip.api.client.ApiRequest.Method;
+import it.thera.thip.api.client.ApiResponse;
 import it.thera.thip.base.azienda.Azienda;
 
 /**
@@ -58,6 +65,10 @@ public class BaseArchismallApi {
 	public static final String CONSERVAZIONE_PASSIVA_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-passiva/versamento";
 
 	public static final String CONSERVAZIONE_ATTIVA_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-attivo/versamento";
+
+	public static final String CONSERVAZIONE_ATTIVA_STATO_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-attivo/stato-conservazione";
+
+	public static final String CONSERVAZIONE_PASSIVA_STATO_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-passiva/stato-conservazione";
 
 	private Token token = null;
 
@@ -222,17 +233,36 @@ public class BaseArchismallApi {
 	 * @throws Exception
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public JSONObject sendGet(String url, String parameters, Map properties) throws Exception {
-		Map bearerAuthorization = getBearerAuthorization();
-		properties.putAll(bearerAuthorization);
-		WebServiceUtilsTherm wj = WebServiceUtilsTherm.getInstance();
-		String[] result = wj.sendGet(url, parameters, properties);
-		//se 401 allora magari il token e' expired, quindi lo ricarico e rifaccio la request
-		if(result[0].equals(String.valueOf(Status.UNAUTHORIZED.getStatusCode()))) {
-			valorizzaTokenAuthentication();
-			result = wj.sendGet(url, parameters, properties);
-		}
-		return formatResultToJSON(result);
+	public JSONObject sendGet(String url, HashMap<String,String> parameters, Map properties, int retryCount) throws Exception {
+	    JSONObject result = new JSONObject();
+	    Map bearerAuthorization = getBearerAuthorization();
+	    properties.putAll(bearerAuthorization);
+	    ApiResponse apiResponse = null;
+	    ApiRequest apiRequest = (ApiRequest) Factory.createObject(ApiRequest.class);
+	    apiRequest.setMethod(Method.GET);
+	    apiRequest.setURL(url);
+	    apiRequest.getHeaders().putAll(bearerAuthorization);
+	    apiRequest.getParameters().putAll(parameters);
+	    ApiClient apiClient = new ApiClient("");
+	    apiResponse = apiClient.send(apiRequest);
+	    String body = apiResponse.getBodyAsString();
+	    try {
+	        JSONObject ret = new JSONObject(body);
+	        result.put("result", ret);
+	    } catch (JSONException e) {
+	        e.printStackTrace(Trace.excStream);
+	    }
+	    result.put("status", apiResponse.getStatus());
+	    
+	    if (apiResponse.getStatus() == Status.UNAUTHORIZED) {
+	        if (retryCount > 0) {
+	            valorizzaTokenAuthentication();
+	            return sendGet(url, parameters, properties, retryCount - 1);
+	        } else {
+	            result.put("error", "Maximum retries exceeded for unauthorized request.");
+	        }
+	    }
+	    return result;
 	}
 
 	/**
@@ -300,7 +330,7 @@ public class BaseArchismallApi {
 		}
 		return formatResultToJSON(result);
 	}
-	
+
 	/**
 	 * Si occupa di ritornare un {@link JSONObject} a partire da un array di stringhe contenente la response.<br>
 	 * Per vedere cosa ritorna la response vedere i metodi:

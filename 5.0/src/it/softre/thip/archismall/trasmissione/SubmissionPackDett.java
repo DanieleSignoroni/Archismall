@@ -8,10 +8,14 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Iterator;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.gson.JsonArray;
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.base.Utils;
 import com.thera.thermfw.persist.CachedStatement;
@@ -237,6 +241,19 @@ public class SubmissionPackDett {
 			return null;
 		}
 	}
+	
+	public String getEndpointStatoConservazione() {
+		String baseURL = BaseArchismallApi.getInstance().getFormattedBaseURL();
+		if(getTipoDoc() == null)
+			return null;
+		if(TipoDocumentiAttivo.contains(getTipoDoc())) {
+			return baseURL + BaseArchismallApi.CONSERVAZIONE_ATTIVA_STATO_VERSAMENTO_ENDPOINT;
+		}else if(TipoDocumentoPassivo.contains(getTipoDoc())) {
+			return baseURL + BaseArchismallApi.CONSERVAZIONE_PASSIVA_STATO_VERSAMENTO_ENDPOINT;
+		}else {
+			return null;
+		}
+	}
 
 	public JSONObject getFileJSONObject() throws FileNotFoundException {
 		if(getNomeFile() == null)
@@ -299,6 +316,30 @@ public class SubmissionPackDett {
 			e.printStackTrace(Trace.excStream);
 		}
 		return json;
+	}
+	
+	public JSONObject recuperaStatoConservazionePacchettoArchismall(String idArchiPro) {
+		String endpoint = getEndpointStatoConservazione();
+		if(endpoint != null) {
+			try {
+				HashMap<String, String> parameters = new HashMap<String, String>();
+				parameters.put("idArchiPro", idArchiPro);
+				JSONObject response = BaseArchismallApi.getInstance().sendGet(endpoint, parameters, new HashMap<String,String>(),3);
+				if(response.has("result")) {
+					JSONObject result = response.getJSONObject("result");
+					if(result.has("results")) {
+						JSONArray results = result.getJSONArray("results");
+						for(int i = 0; i < results.length();) {
+							JSONObject obj = results.getJSONObject(i);
+							return obj;
+						}
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace(Trace.excStream);
+			}
+		}
+		return null;
 	}
 
 	public SubmissionPackMetadata recuperaMetadati(String nomeTabella) {
