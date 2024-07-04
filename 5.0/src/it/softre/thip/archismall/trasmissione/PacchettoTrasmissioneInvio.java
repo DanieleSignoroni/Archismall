@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import javax.ws.rs.core.Response.Status;
+
 import org.json.JSONObject;
 
 import com.thera.thermfw.base.Trace;
@@ -129,27 +131,13 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 								if(daInviare) {
 									Map headers = new java.util.HashMap<String,String>();
 									try {
-										JSONObject response = BaseArchismallApi.getInstance().sendJSON("POST", endpoint, json.toString(), true, headers);
-										String statusCode = response.getString("status");
-										if(!statusCode.equals("200")) {
-											String errors = (String) (response.has("errors") ? response.get("errors") : ""); 
-											if(!errors.isEmpty()) {
-												JSONObject jsonObject = new JSONObject(errors);
-												String message = jsonObject.has("message") ? jsonObject.getString("message") : null;
-												if(message != null && !message.contains("Document already uploaded")) {
-													//output.println(" --> Pacchetto:"+submissionPack.getId()+", inviato verso Archismall con errori: \n "+message);
-												}else if(message != null && message.contains("Document already uploaded")){
-													pacchettoInviato.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
-												}
-												pacchettoInviato.setDescrErrore(message);
-											}else {
-												//output.println(" --> Pacchetto:"+submissionPack.getId()+", inviato verso Archismall con status: \n "+statusCode);
-											}
-										}
-
-										//Registro il pacchetto come inviato o non inviato
-										if(statusCode.equals("200")) 
+										JSONObject response = BaseArchismallApi.getInstance().sendJSON(endpoint, json.toString(),headers,3);
+										Status status = (Status) response.get("status");
+										if(status == Status.OK) {
 											pacchettoInviato.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
+										}else {
+											boolean stop = true;
+										}
 										int rc = pacchettoInviato.save();
 										if(rc >= 0) {
 											ConnectionManager.commit();

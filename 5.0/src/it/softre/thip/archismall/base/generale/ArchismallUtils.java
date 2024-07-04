@@ -38,9 +38,9 @@ public class ArchismallUtils {
 	 * @author Daniele Signoroni 15/05/2024
 	 */
 	public enum TipoDocumentiAttivo {
-		TD01,TD02,TD03,TD04,TD05,TD24,TD25; 
+		TD01,TD02,TD03,TD04,TD05,TD24,TD25,TD26; 
 
-		private static final Set<String> tipiDocumentoAttivi = new HashSet<String>(Arrays.asList("TD01","TD02","TD03","TD04","TD05","TD24","TD25"));
+		private static final Set<String> tipiDocumentoAttivi = new HashSet<String>(Arrays.asList("TD01","TD02","TD03","TD04","TD05","TD24","TD25","TD26"));
 
 		public static boolean contains(String code) {
 			return tipiDocumentoAttivi.contains(code);

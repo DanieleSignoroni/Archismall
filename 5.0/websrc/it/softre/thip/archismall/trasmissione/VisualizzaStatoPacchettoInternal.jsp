@@ -57,21 +57,20 @@ PacchettoTrasmissione pacchetto = (PacchettoTrasmissione) request.getAttribute("
     </script>
 </head>
 <body onload="visualizzaStatoPacchettoInternalOnLoad()">
-        <h2 class="m-4 text-center">Stato pacchetti interni <%=pacchetto.getIdLancio() %></h2>
         <div class="table-container">
         <table class="table table-striped table-bordered">
             <thead class="thead-dark sticky-header">
                 <tr>
                     <th>Lancio</th>
-                    <th>Pacchetto</th>
+<!--                     <th>Pacchetto</th> -->
                     <th>Archi-Pro</th>
                     <th>Numero fattura</th>
                     <th>Data fattura</th>
                     <th>Ragione Soc.</th>
                     <th>Tipo Doc.</th>
-                    <th>Stato Panthera</th>
-                    <th>Stato Archismall</th>
                     <th>Descrizione Errore</th>
+                    <th>Stato Archismall</th>
+                    <th>Stato Panthera</th>
                 </tr>
             </thead>
             <tbody>
@@ -82,15 +81,15 @@ PacchettoTrasmissione pacchetto = (PacchettoTrasmissione) request.getAttribute("
             %>
                         <tr class="row-archismall" data-row-id="<%= row.getIdPacchetto() %>">
                             <td class="lancio"><%= row.getIdPacchetto() %> - Loading...</td>
-                            <td class="pacchetto"></td>
+<!--                             <td class="pacchetto"></td> -->
                             <td class="archiPro"></td>
                             <td class="numeroFattura"></td>
                             <td class="dataFattura"></td>
                             <td class="ragioneSociale"></td>
                             <td class="tipoDocumento"></td>
-                            <td class="statoPanthera"></td>
-                            <td class="statoArchismall"></td>
                             <td class="descrizioneErrore"></td>
+                            <td class="statoArchismall"></td>
+                            <td class="statoPanthera"></td>
                         </tr>
             <%
                     }

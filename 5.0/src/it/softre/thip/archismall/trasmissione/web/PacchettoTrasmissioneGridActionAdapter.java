@@ -35,13 +35,17 @@ public class PacchettoTrasmissioneGridActionAdapter extends GridActionAdapter {
 	
 	private static final long serialVersionUID = 1L;
 
-	private static final String REPLICA_PACCHETTI_RES = "it.softre.thip.archismall.trasmissione.resources.PacchetttoTrasmissione";
-	private static final String REPLICA_PACCHETTI_IMG = "it/softre/thip/archismall/trasmissione/img/replica.gif";
+	private static final String REPLICA_PACCHETTI_RES = "it.softre.thip.archismall.trasmissione.resources.PacchettoTrasmissione";
+	private static final String REPLICA_PACCHETTI_IMG = "it/softre/thip/archismall/trasmissione/img/replica.png";
 	private static final String REPLICA_PACCHETTI = "REPLICA_PACCHETTI";
 	
-	private static final String INVIA_PACCHETTO_RES = "it.softre.thip.archismall.trasmissione.resources.PacchetttoTrasmissione";
-	private static final String INVIA_PACCHETTO_IMG = "it/softre/thip/archismall/trasmissione/img/invio.gif";
+	private static final String INVIA_PACCHETTO_RES = "it.softre.thip.archismall.trasmissione.resources.PacchettoTrasmissione";
+	private static final String INVIA_PACCHETTO_IMG = "it/softre/thip/archismall/trasmissione/img/invia.png";
 	private static final String INVIA_PACCHETTO = "INVIA_PACCHETTO";
+	
+	private static final String VISUALIZZA_STATO_PACCHETTO_RES = "it.softre.thip.archismall.trasmissione.resources.PacchettoTrasmissione";
+	private static final String VISUALIZZA_STATO_PACCHETTO_RES_IMG = "it/softre/thip/archismall/trasmissione/img/stato_pacchetti.png";
+	private static final String VISUALIZZA_STATO_PACCHETTO = "VISUALIZZA_STATO_PACCHETTO";
 
 	@Override
 	public void modifyToolBar(WebToolBar toolBar) {
@@ -52,6 +56,10 @@ public class PacchettoTrasmissioneGridActionAdapter extends GridActionAdapter {
 		//toolBar.removeButton("Delete");
 		toolBar.removeButton("View");
 		toolBar.removeButton("NavDocDgt");
+		toolBar.removeButton("Print");
+		toolBar.removeButton("PrintList");
+		toolBar.removeButton("Export");
+		toolBar.removeButton("Tickler");
 
 		//ora aggiungiamo i nostri bottoni personalizzati
 
@@ -88,14 +96,14 @@ public class PacchettoTrasmissioneGridActionAdapter extends GridActionAdapter {
 		
 		WebToolBarButton visualizzaStatoInternal = 
 				new WebToolBarButton
-				("VIS",
+				(VISUALIZZA_STATO_PACCHETTO,
 						"action_submit",
 						"new",
 						"no",
-						INVIA_PACCHETTO_RES,
-						"VIS",
-						INVIA_PACCHETTO_IMG,
-						"VIS",
+						VISUALIZZA_STATO_PACCHETTO_RES,
+						VISUALIZZA_STATO_PACCHETTO,
+						VISUALIZZA_STATO_PACCHETTO_RES_IMG,
+						VISUALIZZA_STATO_PACCHETTO,
 						"single",
 						false);
 		toolBar.addButton(visualizzaStatoInternal);
@@ -106,10 +114,14 @@ public class PacchettoTrasmissioneGridActionAdapter extends GridActionAdapter {
 		super.modifyMenuBar(menuBar);
 		menuBar.removeMenu("ListMenu.New");
 		menuBar.removeMenu("ListMenu.NewTemplate");
+		menuBar.removeMenu("ListMenu.PrintList");
+		menuBar.removeMenu("ListMenu.Export");
 		menuBar.removeMenu("SelectedMenu.Open");
 		menuBar.removeMenu("SelectedMenu.Copy");
 		menuBar.removeMenu("SelectedMenu.Delete");
 		menuBar.removeMenu("SelectedMenu.View");
+		menuBar.removeMenu("SelectedMenu.Print");
+		
 	}
 
 	@Override
@@ -126,7 +138,7 @@ public class PacchettoTrasmissioneGridActionAdapter extends GridActionAdapter {
 			}
 			se.getRequest().setAttribute("lstChiaviSelected", lstChiaviSelected);
 			se.sendRequest(getServletContext(),"it/softre/thip/archismall/trasmissione/PacchettoTrasmissioneInvio.jsp", true);
-		}else if(action.equals("VIS")) {
+		}else if(action.equals(VISUALIZZA_STATO_PACCHETTO)) {
 			try {
 				PacchettoTrasmissione pacchetto = (PacchettoTrasmissione) 
 						PacchettoTrasmissione.elementWithKey(PacchettoTrasmissione.class, se.getRequest().getParameter(OBJECT_KEY), PersistentObject.NO_LOCK);

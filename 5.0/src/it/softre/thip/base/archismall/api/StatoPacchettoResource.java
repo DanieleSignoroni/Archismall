@@ -30,7 +30,7 @@ public class StatoPacchettoResource extends BaseResource {
 					pacchettoInviato.getIdArchiPro(),
 					String.valueOf(pacchettoInviato.getStatoPacchetto()),
 					String.valueOf(pacchettoInviato.getStatoArchismall()),
-					pacchettoInviato.getDescrErrore(),dettaglio.getNumero().trim(),dettaglio.getDataDoc().toString(),dettaglio.getRagioneSociale().trim(),dettaglio.getTipoDoc().trim());
+					"",dettaglio.getNumero().trim(),dettaglio.getDataDoc().toString(),dettaglio.getRagioneSociale().trim(),dettaglio.getTipoDoc().trim());
 			if(stato != null) {
 				try {
 					Integer status = null;
@@ -40,6 +40,9 @@ public class StatoPacchettoResource extends BaseResource {
 						ArchismallErrors errore = ArchismallErrors.getByErrorCode(status);
 						if(errore != null)
 							statoConservazione.setDescrizioneErrore(errore.getErrorDescription());
+					}else if(stato.has("statusDescription") && stato.get("statusDescription") != JSONObject.NULL){
+						String descr = (String) (stato.has("statusDescription") ? stato.get("statusDescription") : "");
+						statoConservazione.setDescrizioneErrore(descr);
 					}
 				}catch (JSONException e) {
 					e.printStackTrace();

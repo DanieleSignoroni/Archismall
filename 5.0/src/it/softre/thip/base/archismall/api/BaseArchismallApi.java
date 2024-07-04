@@ -12,7 +12,6 @@ import org.json.JSONObject;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.stream.MalformedJsonException;
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.base.util.WebServiceUtils;
 import com.thera.thermfw.base.util.WebServiceUtilsTherm;
@@ -234,35 +233,35 @@ public class BaseArchismallApi {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public JSONObject sendGet(String url, HashMap<String,String> parameters, Map properties, int retryCount) throws Exception {
-	    JSONObject result = new JSONObject();
-	    Map bearerAuthorization = getBearerAuthorization();
-	    properties.putAll(bearerAuthorization);
-	    ApiResponse apiResponse = null;
-	    ApiRequest apiRequest = (ApiRequest) Factory.createObject(ApiRequest.class);
-	    apiRequest.setMethod(Method.GET);
-	    apiRequest.setURL(url);
-	    apiRequest.getHeaders().putAll(bearerAuthorization);
-	    apiRequest.getParameters().putAll(parameters);
-	    ApiClient apiClient = new ApiClient("");
-	    apiResponse = apiClient.send(apiRequest);
-	    String body = apiResponse.getBodyAsString();
-	    try {
-	        JSONObject ret = new JSONObject(body);
-	        result.put("result", ret);
-	    } catch (JSONException e) {
-	        e.printStackTrace(Trace.excStream);
-	    }
-	    result.put("status", apiResponse.getStatus());
-	    
-	    if (apiResponse.getStatus() == Status.UNAUTHORIZED) {
-	        if (retryCount > 0) {
-	            valorizzaTokenAuthentication();
-	            return sendGet(url, parameters, properties, retryCount - 1);
-	        } else {
-	            result.put("error", "Maximum retries exceeded for unauthorized request.");
-	        }
-	    }
-	    return result;
+		JSONObject result = new JSONObject();
+		Map bearerAuthorization = getBearerAuthorization();
+		properties.putAll(bearerAuthorization);
+		ApiResponse apiResponse = null;
+		ApiRequest apiRequest = (ApiRequest) Factory.createObject(ApiRequest.class);
+		apiRequest.setMethod(Method.GET);
+		apiRequest.setURL(url);
+		apiRequest.getHeaders().putAll(bearerAuthorization);
+		apiRequest.getParameters().putAll(parameters);
+		ApiClient apiClient = new ApiClient("");
+		apiResponse = apiClient.send(apiRequest);
+		String body = apiResponse.getBodyAsString();
+		try {
+			JSONObject ret = new JSONObject(body);
+			result.put("result", ret);
+		} catch (JSONException e) {
+			e.printStackTrace(Trace.excStream);
+		}
+		result.put("status", apiResponse.getStatus());
+
+		if (apiResponse.getStatus() == Status.UNAUTHORIZED) {
+			if (retryCount > 0) {
+				valorizzaTokenAuthentication();
+				return sendGet(url, parameters, properties, retryCount - 1);
+			} else {
+				result.put("error", "Maximum retries exceeded for unauthorized request.");
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -318,17 +317,37 @@ public class BaseArchismallApi {
 	 * @throws Exception
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public JSONObject sendJSON(String method, String url, String json, boolean asBody, Map properties) throws Exception {
+	public JSONObject sendJSON(String url, String json,Map properties, int retryCount) throws Exception {
+		JSONObject result = new JSONObject();
 		Map bearerAuthorization = getBearerAuthorization();
 		properties.putAll(bearerAuthorization);
-		WebServiceUtilsTherm wj = WebServiceUtilsTherm.getInstance();
-		String[] result = wj.sendJSON(method, url, json, asBody,properties);
-		//se 401 allora magari il token e' expired, quindi lo ricarico e rifaccio la request
-		if(result[0].equals(String.valueOf(Status.UNAUTHORIZED.getStatusCode()))) {
-			valorizzaTokenAuthentication();
-			result = wj.sendJSON(method, url, json, asBody);
+		ApiResponse apiResponse = null;
+		ApiRequest apiRequest = (ApiRequest) Factory.createObject(ApiRequest.class);
+		apiRequest.setMethod(Method.POST);
+		apiRequest.setContentType(MediaType.APPLICATION_JSON);
+		apiRequest.setURL(url);
+		apiRequest.setBody(json);
+		apiRequest.getHeaders().putAll(bearerAuthorization);
+		ApiClient apiClient = new ApiClient("");
+		apiResponse = apiClient.send(apiRequest);
+		String body = apiResponse.getBodyAsString();
+		try {
+			JSONObject ret = new JSONObject(body);
+			result.put("result", ret);
+		} catch (JSONException e) {
+			e.printStackTrace(Trace.excStream);
 		}
-		return formatResultToJSON(result);
+		result.put("status", apiResponse.getStatus());
+
+		if (apiResponse.getStatus() == Status.UNAUTHORIZED) {
+			if (retryCount > 0) {
+				valorizzaTokenAuthentication();
+				return sendJSON(url, json, properties, retryCount);
+			} else {
+				result.put("error", "Maximum retries exceeded for unauthorized request.");
+			}
+		}
+		return result;
 	}
 
 	/**
