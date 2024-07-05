@@ -15,6 +15,8 @@ import com.thera.thermfw.persist.TableManager;
 import com.thera.thermfw.security.Authorizable;
 import com.thera.thermfw.security.Conflictable;
 
+import it.softre.thip.archismall.base.generale.StatoPacchettoArchismall;
+
 public abstract class PacchettoInviatoPO extends PersistentObject
 		implements BusinessObject, Authorizable, Deletable, Conflictable {
 
@@ -48,7 +50,7 @@ public abstract class PacchettoInviatoPO extends PersistentObject
 
 	public PacchettoInviatoPO() {
 		setStatoPacchetto(PacchettoTrasmissione.NON_PROCESSATO);
-		setStatoArchismall('0');
+		setStatoArchismall(StatoPacchettoArchismall.DA_CONSERVARE);
 	}
 
 	public void setIdPacchetto(Integer idPacchetto) {

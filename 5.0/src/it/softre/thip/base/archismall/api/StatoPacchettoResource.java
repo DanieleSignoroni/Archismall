@@ -10,6 +10,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.thera.thermfw.rs.BaseResource;
+import com.thera.thermfw.type.EnumType;
 
 import it.softre.thip.archismall.base.generale.ArchismallErrors;
 import it.softre.thip.archismall.trasmissione.PacchettoInviato;
@@ -31,18 +32,26 @@ public class StatoPacchettoResource extends BaseResource {
 					String.valueOf(pacchettoInviato.getStatoPacchetto()),
 					String.valueOf(pacchettoInviato.getStatoArchismall()),
 					"",dettaglio.getNumero().trim(),dettaglio.getDataDoc().toString(),dettaglio.getRagioneSociale().trim(),dettaglio.getTipoDoc().trim());
+			EnumType enumType = EnumType.getEnumTypeInstance("YStatoInvioPacchettoArchi", EnumType.class);
+			statoConservazione.setStatoPanthera(enumType.descriptionFromValue(String.valueOf(pacchettoInviato.getStatoPacchetto())));
 			if(stato != null) {
 				try {
 					Integer status = null;
-					if(stato.has("errorCode") && stato.get("errorCode") != JSONObject.NULL) {
-						status = stato.getInt("errorCode"); 
+					Integer errorCode = null;
+					if(stato.has("status") && stato.get("status") != JSONObject.NULL) {
+						//se lo status e' != null allora considero questo
+						enumType = EnumType.getEnumTypeInstance("YStatoPacchettoArchismall", EnumType.class);
+						status = stato.getInt("status"); 
+						String descr = enumType.descriptionFromValue(String.valueOf(status));
+						statoConservazione.setDescrizioneStatoArchismall(descr);
 						statoConservazione.setStatoArchismall(String.valueOf(status));
-						ArchismallErrors errore = ArchismallErrors.getByErrorCode(status);
+					}
+					if(stato.has("errorCode") && stato.get("errorCode") != JSONObject.NULL) {
+						errorCode = stato.getInt("errorCode"); 
+						statoConservazione.setStatoArchismall(String.valueOf(errorCode));
+						ArchismallErrors errore = ArchismallErrors.getByErrorCode(errorCode);
 						if(errore != null)
 							statoConservazione.setDescrizioneErrore(errore.getErrorDescription());
-					}else if(stato.has("statusDescription") && stato.get("statusDescription") != JSONObject.NULL){
-						String descr = (String) (stato.has("statusDescription") ? stato.get("statusDescription") : "");
-						statoConservazione.setDescrizioneErrore(descr);
 					}
 				}catch (JSONException e) {
 					e.printStackTrace();
@@ -65,6 +74,7 @@ public class StatoPacchettoResource extends BaseResource {
 		protected String dataFattura;
 		protected String ragioneSociale;
 		protected String tipoDocumento;
+		protected String descrizioneStatoArchismall;
 
 		public StatoConservazione(String lancio, String pacchetto, String archiPro, String statoPanthera, String statoArchismall, String descrizioneErrore
 				,String numeroFattura, String dataFattura,  String ragioneSociale, String tipoDocumento) {
@@ -110,6 +120,14 @@ public class StatoPacchettoResource extends BaseResource {
 
 		public void setTipoDocumento(String tipoDocumento) {
 			this.tipoDocumento = tipoDocumento;
+		}
+
+		public String getDescrizioneStatoArchismall() {
+			return descrizioneStatoArchismall;
+		}
+
+		public void setDescrizioneStatoArchismall(String descrizioneStatoArchismall) {
+			this.descrizioneStatoArchismall = descrizioneStatoArchismall;
 		}
 
 		public void setLancio(String lancio) {

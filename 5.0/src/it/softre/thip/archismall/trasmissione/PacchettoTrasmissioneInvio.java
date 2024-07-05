@@ -133,11 +133,7 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 									try {
 										JSONObject response = BaseArchismallApi.getInstance().sendJSON(endpoint, json.toString(),headers,3);
 										Status status = (Status) response.get("status");
-										if(status == Status.OK) {
-											pacchettoInviato.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
-										}else {
-											boolean stop = true;
-										}
+										pacchettoInviato.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
 										int rc = pacchettoInviato.save();
 										if(rc >= 0) {
 											ConnectionManager.commit();
