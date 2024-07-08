@@ -18,6 +18,18 @@ import com.thera.thermfw.security.Conflictable;
 import it.thera.thip.base.azienda.Azienda;
 import it.thera.thip.cs.EntitaAzienda;
 
+/**
+ * 
+ * <h1>Softre Solutions</h1>
+ * <br>
+ * @author Daniele Signoroni 08/07/2024
+ * <br><br>
+ * <b>71578	DSSOF3	08/07/2024</b>
+ * <p>Prima stesura.<br>
+ *  
+ * </p>
+ */
+
 public abstract class ConfigurazioneArchismallPO extends EntitaAzienda
 		implements BusinessObject, Authorizable, Deletable, Conflictable {
 

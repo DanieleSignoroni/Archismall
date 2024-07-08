@@ -9,13 +9,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.google.gson.JsonArray;
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.base.Utils;
 import com.thera.thermfw.persist.CachedStatement;
@@ -25,6 +23,18 @@ import it.softre.thip.archismall.base.generale.ArchismallUtils.TipoDocumentiAtti
 import it.softre.thip.archismall.base.generale.ArchismallUtils.TipoDocumentoPassivo;
 import it.softre.thip.base.archismall.api.BaseArchismallApi;
 import it.thera.thip.cs.ThipException;
+
+/**
+ * Dettaglio del pacchetto da FP.SUBMISSION_PACK_DETT.<br>
+ * <h1>Softre Solutions</h1>
+ * <br>
+ * @author Daniele Signoroni 08/07/2024
+ * <br><br>
+ * <b>71578	DSSOF3	08/07/2024</b>
+ * <p>Prima stesura.<br>
+ *  
+ * </p>
+ */
 
 public class SubmissionPackDett {
 

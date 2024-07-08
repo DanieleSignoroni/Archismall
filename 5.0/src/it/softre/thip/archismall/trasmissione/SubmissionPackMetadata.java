@@ -3,6 +3,18 @@ package it.softre.thip.archismall.trasmissione;
 import java.math.BigDecimal;
 import java.sql.Date;
 
+/**
+ * 
+ * <h1>Softre Solutions</h1>
+ * <br>
+ * @author Daniele Signoroni 08/07/2024
+ * <br><br>
+ * <b>71578	DSSOF3	08/07/2024</b>
+ * <p>Prima stesura.<br>
+ *  
+ * </p>
+ */
+
 public class SubmissionPackMetadata {
 
 	private String F9ICSOC = "";

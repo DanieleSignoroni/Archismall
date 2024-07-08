@@ -1,5 +1,17 @@
 package it.softre.thip.archismall.base.generale;
 
+/**
+ * Enumerato che rappresenta tutti i possibili errori ritornati da Archismall.
+ * <h1>Softre Solutions</h1>
+ * <br>
+ * @author Daniele Signoroni 08/07/2024
+ * <br><br>
+ * <b>71578	DSSOF3	08/07/2024</b>
+ * <p>Prima stesura.<br>
+ *  
+ * </p>
+ */
+
 public enum ArchismallErrors {
     GENERIC_EXCEPTION(1, "Generic error"),
     USER_ALREADY_REGISTERED(2, "User already registered"),

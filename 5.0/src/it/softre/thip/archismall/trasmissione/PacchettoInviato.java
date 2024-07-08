@@ -11,6 +11,18 @@ import com.thera.thermfw.persist.CachedStatement;
 import com.thera.thermfw.persist.ConnectionManager;
 import com.thera.thermfw.persist.Database;
 
+/**
+ * Rappresenta un pacchetto inviato verso Archismall.<br>
+ * <h1>Softre Solutions</h1>
+ * <br>
+ * @author Daniele Signoroni 08/07/2024
+ * <br><br>
+ * <b>71578	DSSOF3	08/07/2024</b>
+ * <p>Prima stesura.<br>
+ *  
+ * </p>
+ */
+
 public class PacchettoInviato extends PacchettoInviatoPO {
 	
 	private static final String STMT_SELECT_SUBMISSION_PACK_DETT = "SELECT * FROM FP.SUBMISSION_PACK_DETT P "

@@ -25,7 +25,7 @@ import it.softre.thip.archismall.trasmissione.PacchettoTrasmissione;
  * <br>
  * @author Daniele Signoroni 15/05/2024
  * <br><br>
- * <b>71XXX	DSSOF3	15/05/2024</b>
+ * <b>71578	DSSOF3	15/05/2024</b>
  * <p>Prima stesura.<br>
  *  
  * </p>

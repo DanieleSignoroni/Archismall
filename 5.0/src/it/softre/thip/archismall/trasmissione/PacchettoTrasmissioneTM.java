@@ -6,6 +6,18 @@ import com.thera.thermfw.base.SystemParam;
 import com.thera.thermfw.persist.Factory;
 import com.thera.thermfw.persist.TableManager;
 
+/**
+ * 
+ * <h1>Softre Solutions</h1>
+ * <br>
+ * @author Daniele Signoroni 08/07/2024
+ * <br><br>
+ * <b>71578	DSSOF3	08/07/2024</b>
+ * <p>Prima stesura.<br>
+ *  
+ * </p>
+ */
+
 public class PacchettoTrasmissioneTM extends TableManager {
 
 	public static final String STATO_PACCHETTO = "STATO_PACCHETTO";

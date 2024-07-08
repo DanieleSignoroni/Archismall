@@ -14,6 +14,18 @@ import com.thera.thermfw.persist.CachedStatement;
 import com.thera.thermfw.persist.ConnectionManager;
 import com.thera.thermfw.persist.Database;
 
+/**
+ * Rappresenta un pacchettone da inviare verso Archismall.<br>
+ * <h1>Softre Solutions</h1>
+ * <br>
+ * @author Daniele Signoroni 08/07/2024
+ * <br><br>
+ * <b>71578	DSSOF3	08/07/2024</b>
+ * <p>Prima stesura.<br>
+ *  
+ * </p>
+ */
+
 public class PacchettoTrasmissione extends PacchettoTrasmissionePO {
 
 	public static final char NON_PROCESSATO = '0';
