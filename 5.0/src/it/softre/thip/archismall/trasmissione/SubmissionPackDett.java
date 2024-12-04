@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,8 +20,6 @@ import com.thera.thermfw.base.Utils;
 import com.thera.thermfw.persist.CachedStatement;
 
 import it.softre.thip.archismall.base.generale.ArchismallUtils;
-import it.softre.thip.archismall.base.generale.ArchismallUtils.TipoDocumentiAttivo;
-import it.softre.thip.archismall.base.generale.ArchismallUtils.TipoDocumentoPassivo;
 import it.softre.thip.base.archismall.api.BaseArchismallApi;
 import it.thera.thip.cs.ThipException;
 
@@ -237,28 +236,27 @@ public class SubmissionPackDett {
 	 * Prima stesura.<br>
 	 *
 	 * </p>
+	 * @param tipoPacchetto 
 	 * @return
 	 */
-	public String getEndpointDaTipoDocumento() {
-		String baseURL = BaseArchismallApi.getInstance().getFormattedBaseURL();
-		if(getTipoDoc() == null)
+	public String getEndpointDaTipoDocumento(Character tipoPacchetto, BaseArchismallApi baseArchismallApi) {
+		String baseURL = baseArchismallApi.getFormattedBaseURL();
+		if(tipoPacchetto == null)
 			return null;
-		if(TipoDocumentiAttivo.contains(getTipoDoc())) {
+		if(tipoPacchetto.equals('V'))
 			return baseURL + BaseArchismallApi.CONSERVAZIONE_ATTIVA_VERSAMENTO_ENDPOINT;
-		}else if(TipoDocumentoPassivo.contains(getTipoDoc())) {
+		if(tipoPacchetto.equals('A'))
 			return baseURL + BaseArchismallApi.CONSERVAZIONE_PASSIVA_VERSAMENTO_ENDPOINT;
-		}else {
-			return null;
-		}
+		return null;
 	}
-	
-	public String getEndpointStatoConservazione() {
-		String baseURL = BaseArchismallApi.getInstance().getFormattedBaseURL();
-		if(getTipoDoc() == null)
+
+	public String getEndpointStatoConservazione(Character tipoPacchetto, BaseArchismallApi baseArchismallApi) {
+		String baseURL = baseArchismallApi.getFormattedBaseURL();
+		if(tipoPacchetto == null)
 			return null;
-		if(TipoDocumentiAttivo.contains(getTipoDoc())) {
+		if(tipoPacchetto.equals('V')) {
 			return baseURL + BaseArchismallApi.CONSERVAZIONE_ATTIVA_STATO_VERSAMENTO_ENDPOINT;
-		}else if(TipoDocumentoPassivo.contains(getTipoDoc())) {
+		}else if(tipoPacchetto.equals('A')) {
 			return baseURL + BaseArchismallApi.CONSERVAZIONE_PASSIVA_STATO_VERSAMENTO_ENDPOINT;
 		}else {
 			return null;
@@ -266,23 +264,38 @@ public class SubmissionPackDett {
 	}
 
 	public JSONObject getFileJSONObject() throws FileNotFoundException {
-		if(getNomeFile() == null)
+		if (this.getNomeFile() == null) {
 			return null;
-		JSONObject json = new JSONObject();
-		File file = new File(getNomeFile()); 
-		if(file.exists()) {
-			try {
-				json.put("content", getEncodedFile(getFileBytes(file)));
-				json.put("name", file.getName());
-			} catch (JSONException e) {
-				e.printStackTrace(Trace.excStream);
-			} catch (Exception e) {
-				e.printStackTrace(Trace.excStream);
+		} else {
+			JSONObject json = new JSONObject();
+			File file = new File(this.getNomeFile());
+			if (file.exists()) {
+				try {
+					json.put("content", this.getEncodedFile(this.getFileBytes(file)));
+					json.put("name", file.getName());
+				} catch (JSONException var7) {
+					var7.printStackTrace(Trace.excStream);
+				} catch (Exception var8) {
+					var8.printStackTrace(Trace.excStream);
+				}
+			} else {
+				if (this.getDescrErrore() == null || !this.getDescrErrore().contains("F9IVA(Indicato come cartaceo)")) {
+					throw new FileNotFoundException("File non trovato con percorso : " + this.getNomeFile());
+				}
+
+				byte[] fileBytes = this.getNumero().getBytes(StandardCharsets.UTF_8);
+
+				try {
+					json.put("content", this.getEncodedFile(fileBytes));
+					json.put("name", this.getNumero());
+				} catch (JSONException var5) {
+					var5.printStackTrace(Trace.excStream);
+				} catch (Exception var6) {
+					var6.printStackTrace(Trace.excStream);
+				}
 			}
-		}else {
-			throw new FileNotFoundException("File non trovato con percorso : "+getNomeFile());
+			return json;
 		}
-		return json;
 	}
 
 	public byte[] getFileBytes(File file) throws Exception{
@@ -296,7 +309,7 @@ public class SubmissionPackDett {
 		return new String (Base64.getEncoder().encode(bytes));
 	}
 
-	public JSONObject getJSONVersamento() throws ThipException {
+	public JSONObject getJSONVersamento(char tipo) throws ThipException {
 		JSONObject json = new JSONObject();
 		try {
 			SubmissionPackMetadata metadati = recuperaMetadati("THIP.F9IVA00K");
@@ -305,7 +318,7 @@ public class SubmissionPackDett {
 			}
 			json.put("file", getFileJSONObject());
 			//ora ci aggiungiamo tutto il resto 
-			if(TipoDocumentiAttivo.contains(getTipoDoc()))
+			if(tipo == 'V')
 				json.put("idArchiPro", "SOFTRE_FATATT_"+metadati.getF9IAFES().trim()+"-"+getId());
 			else
 				json.put("idArchiPro", "SOFTRE_FATPASS_"+metadati.getF9IAFES().trim()+"-"+getId());
@@ -327,14 +340,14 @@ public class SubmissionPackDett {
 		}
 		return json;
 	}
-	
-	public JSONObject recuperaStatoConservazionePacchettoArchismall(String idArchiPro) {
-		String endpoint = getEndpointStatoConservazione();
+
+	public JSONObject recuperaStatoConservazionePacchettoArchismall(String idArchiPro, char tipoPacchetto, BaseArchismallApi baseArchismallApi) {
+		String endpoint = getEndpointStatoConservazione(tipoPacchetto,baseArchismallApi);
 		if(endpoint != null) {
 			try {
 				HashMap<String, String> parameters = new HashMap<String, String>();
 				parameters.put("idArchiPro", idArchiPro);
-				JSONObject response = BaseArchismallApi.getInstance().sendGet(endpoint, parameters, new HashMap<String,String>(),3);
+				JSONObject response = baseArchismallApi.sendGet(endpoint, parameters, new HashMap<String,String>(),3);
 				if(response.has("result")) {
 					JSONObject result = response.getJSONObject("result");
 					if(result.has("results")) {
@@ -353,8 +366,33 @@ public class SubmissionPackDett {
 	}
 
 	public SubmissionPackMetadata recuperaMetadati(String nomeTabella) {
+		String where1 = " WHERE F9INDOC = '" + getNumero() + "' AND F9IUDOC = '" + getDataDoc() + "' ";
+		SubmissionPackMetadata metadata = recuperaMetadati(nomeTabella, where1);
+
+		if (metadata == null) { //su FP
+			String where3 = " WHERE F9INDOC = '" + getNumero() + "' AND F9IUDOC = '" + getDataDoc() + "' ";
+			metadata = recuperaMetadati("FP.F9IVA00K", where3);
+		}
+		
+		if (metadata == null) { //su THIP con spazio
+			String numeroFat = " " + getNumero();
+			String where2 = " WHERE F9INDOC = '" + numeroFat + "' AND F9IUDOC = '" + getDataDoc() + "' ";
+			metadata = recuperaMetadati(nomeTabella, where2);
+		}
+
+		if(metadata == null) { //su FP con spazio
+			String numeroFat = " " + getNumero();
+			String where2 = " WHERE F9INDOC = '" + numeroFat + "' AND F9IUDOC = '" + getDataDoc() + "' ";
+			metadata = recuperaMetadati("FP.F9IVA00K", where2);
+		}
+
+		return metadata;
+	}
+
+	private SubmissionPackMetadata recuperaMetadati(String nomeTabella,String where) {
 		SubmissionPackMetadata metadata = null;
-		String stmt = " SELECT * FROM "+nomeTabella+" WHERE F9INDOC = '"+getNumero()+"' AND F9IUDOC = '"+getDataDoc()+"' ";
+		String stmt = " SELECT * FROM " + nomeTabella + where;
+		stmt += " AND F9IIDLA = '"+getIdLancio().trim()+"' "; //importante!!
 		ResultSet rs = null;
 		CachedStatement cs = null;
 		SubmissionPackMetadataRsIterator rsIterator = null;
@@ -362,26 +400,24 @@ public class SubmissionPackDett {
 			cs = new CachedStatement(stmt);
 			rs = cs.executeQuery();
 			rsIterator = new SubmissionPackMetadataRsIterator(rs);
-			while(rsIterator.hasNext()) {
+			while (rsIterator.hasNext()) {
 				metadata = (SubmissionPackMetadata) rsIterator.next();
 			}
-		}catch (SQLException e) {
+		} catch (SQLException e) {
 			e.printStackTrace(Trace.excStream);
-		}finally {
+		} finally {
 			try {
-				if(cs != null) {
+				if (cs != null) {
 					cs.free();
 				}
-				if(rsIterator != null) {
+				if (rsIterator != null) {
 					rsIterator.closeCursor();
 				}
-			}catch (SQLException e) {
+			} catch (SQLException e) {
 				e.printStackTrace(Trace.excStream);
 			}
 		}
-		if(metadata == null) {
-			return recuperaMetadati("FP.F9IVA00K");
-		}
 		return metadata;
 	}
+
 }
