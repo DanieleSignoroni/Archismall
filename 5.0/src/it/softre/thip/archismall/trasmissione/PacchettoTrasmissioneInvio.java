@@ -14,12 +14,14 @@ import java.util.StringTokenizer;
 
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.log4j.spi.ErrorCode;
 import org.json.JSONObject;
 
 import com.thera.thermfw.base.IniFile;
 import com.thera.thermfw.base.Trace;
 import com.thera.thermfw.batch.BatchRunnable;
 import com.thera.thermfw.persist.ConnectionManager;
+import com.thera.thermfw.persist.ErrorCodes;
 import com.thera.thermfw.persist.Factory;
 import com.thera.thermfw.persist.KeyHelper;
 import com.thera.thermfw.persist.PersistentObject;
@@ -48,6 +50,8 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 
 	protected String iChiaviSelezionati;
 
+	BaseArchismallApi baseArchismallApi = null;
+
 	public String getChiaviSelezionati() {
 		return iChiaviSelezionati;
 	}
@@ -56,195 +60,238 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 		this.iChiaviSelezionati = iChiaviSelezionati;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	protected boolean run() {
 		String dbName = IniFile.getValue("thermfw.ini","Web", "Database");
 		dbName = dbName.substring(0,dbName.indexOf(","));
 		boolean everythingOk = true;
-		if(dbName.equals("PANTH01")) {
-			everythingOk = invaPacchettiVersoArchismall();
+		try {
+			if(dbName.equals("PANTH01")) {
+				ConfigurazioneArchismall conf = ConfigurazioneArchismall.getConfigurazioneArchismall();
+				this.baseArchismallApi = (BaseArchismallApi) Factory.createObject(BaseArchismallApi.class);
+				if(conf != null) {
+					List<PacchettoTrasmissione> pacchetti = recuperaListaPacchettiDaSelezionati(getChiaviSelezionati());
+					if(pacchetti.size() > 0) {
+						for (Iterator iterator = pacchetti.iterator(); iterator.hasNext();) {
+							PacchettoTrasmissione pacchetto = (PacchettoTrasmissione) iterator.next();
+							Character tipoPacchetto = PacchettoTrasmissione.getTipoPacchettone(pacchetto.getIdLancio());
+							Map<String, List<SubmissionPackDett>> dettagli = normalizzazionePacchetto(pacchetto);
+							int rc = inviaDettagliPacchettiVersoArchismall(dettagli,tipoPacchetto);
+							
+							//se tutto ok flaggo come processato, altrimenti processato come errore
+							if(rc > ErrorCodes.OK) {
+								pacchetto.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
+							}else {
+								pacchetto.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO_CON_ERRORE);
+							}
+							
+							try {
+								rc = pacchetto.save();
+								if(rc > 0)
+									ConnectionManager.commit();
+								else
+									ConnectionManager.rollback();
+							} catch (SQLException e) {
+								output.println(" --> Errore nel salvataggio del pacchettone : "+e.getMessage());
+								e.printStackTrace(Trace.excStream);
+							}
+							
+						}
+					}
+				}else {
+					output.print(" ** Prima di inviare i pacchetti verso Archismall va definita la ConfigurazioneArchismall :"+ConfigurazioneArchismallTM.TABLE_NAME);
+				}
+			}
+		}catch (Exception e) {
+			output.println("Exc : " + e.getMessage());
+			everythingOk = false;
+			e.printStackTrace(Trace.excStream);
 		}
 		return everythingOk;
 	}
 
-	@SuppressWarnings("rawtypes")
-	protected boolean invaPacchettiVersoArchismall() {
-		boolean result = true;
-		ConfigurazioneArchismall conf = ConfigurazioneArchismall.getConfigurazioneArchismall();
-		if(conf != null) {
-			BaseArchismallApi baseArchismallApi = (BaseArchismallApi) Factory.createObject(BaseArchismallApi.class);
-			List<PacchettoTrasmissione> pacchetti = recuperaListaPacchettiDaSelezionati(getChiaviSelezionati());
-			if(pacchetti.size() > 0) {
-				for (Iterator iterator = pacchetti.iterator(); iterator.hasNext();) {
-					PacchettoTrasmissione pacchetto = (PacchettoTrasmissione) iterator.next();
-					List<SubmissionPackDett> submissionPackages = pacchetto.submissionPacksDettaglioDaPacchetto();
-					Character tipoPacchetto = PacchettoTrasmissione.getTipoPacchettone(pacchetto.getIdLancio());
-					boolean isInError = false;
-					if(tipoPacchetto != null) {
-						Map<String, List<SubmissionPackDett>> groupedMap = groupSubmissionPackagesForInvoice(submissionPackages);
-						int totSize = 0;
-						int successPackets = 0;
-						int errorPackets = 0;
-						for (Map.Entry<String, List<SubmissionPackDett>> entry : groupedMap.entrySet()) {
-							List<SubmissionPackDett> dettagli = entry.getValue();
-							Collections.sort(dettagli, new Comparator<SubmissionPackDett>() {
-								public int compare(SubmissionPackDett o1, SubmissionPackDett o2) {
-									return Long.compare(o1.getId(), o2.getId());
-								}
-							});
-							String validPath = null;
-							for(SubmissionPackDett submissionPack : dettagli) {
-								List<String> errors = new ArrayList<String>();
-								File file = new File(submissionPack.getNomeFile());
-								if(file.exists()) {
-									validPath = submissionPack.getNomeFile();
-								}else {
-									if(validPath != null) {
-										String path = findValidPathFromPrevoiusSubmissionPack(validPath,submissionPack);
-										file = new File(path);
-										if(!file.exists()) {
-											errors.add(" --> File : "+path+", non trovato nel sistema");
-										}
-										submissionPack.setNomeFile(path);
-									}
-								}
-								String endpoint = submissionPack.getEndpointDaTipoDocumento(tipoPacchetto,baseArchismallApi);
-								if(endpoint == null) {
-									errors.add(" --> Per il Tipo Documento : "+submissionPack.getTipoDoc()+", il sistema non ha determinato se passivo/attivo ");
-									continue;
-								}
-								if(errors.isEmpty()) {
-									JSONObject json;
-									try {
-										json = submissionPack.getJSONVersamento(tipoPacchetto);
-										if(endpoint != null && json != null && !json.isEmpty()) {
 
-											String key = KeyHelper.buildObjectKey(new String[] {
-													submissionPack.getIdLancio().trim(),
-													String.valueOf(submissionPack.getId()),
-													(String) json.get("idArchiPro")
-											});
-											PacchettoInviato pacchettoInviato = (PacchettoInviato) Factory.createObject(PacchettoInviato.class);
-											pacchettoInviato.setKey(key);
-											pacchettoInviato.retrieve();
-											char statoArchismall = pacchettoInviato.getStatoArchismall();
-											switch (statoArchismall) {
-											case StatoPacchettoArchismall.DA_CONSERVARE:
-												Map headers = new java.util.HashMap<String,String>();
-												try {
-													JSONObject response = baseArchismallApi.sendJSON(endpoint, json.toString(),headers,3);
-													Status status = (Status) response.get("status");
-													if(status != Status.OK) {
-														if(response.has("result")) {
-															JSONObject r = response.getJSONObject("result");
-															if(r.has("errors")) {
-																errors.add(r.get("errors").toString());
-																errorPackets++;
-															}else if(r.has("message")) {
-																String message = r.getString("message");
-																if(message.equals("Document already uploaded")) {
-																	JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
-																	if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
-																		pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-																		successPackets++;
-																	}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
-																		pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-																		successPackets++;
-																	}
-																}
-															}
-														}
-													}else {
+	/**
+	 * <h1>Softre Solutions</h1>
+	 * <br>
+	 * @author Daniele Signoroni 10/01/2025
+	 * <br><br>
+	 * <b>71XXX	DSSOF3	10/01/2025</b>
+	 * <p></p>
+	 * @param tipoPacchetto 
+	 * @param dettagli
+	 * @return
+	 */
+	public int inviaDettagliPacchettiVersoArchismall(Map<String, List<SubmissionPackDett>> groupedMap, Character tipoPacchetto) {
+		int rc = ErrorCodes.OK;
+		for (Map.Entry<String, List<SubmissionPackDett>> entry : groupedMap.entrySet()) {
+			List<SubmissionPackDett> dettagli = entry.getValue();
+			for(SubmissionPackDett submissionPack : dettagli) {
+				int totSize = 0;
+				int successPackets = 0;
+				int errorPackets = 0;
+				List<String> errors = new ArrayList<String>();
+				String endpoint = submissionPack.getEndpointDaTipoDocumento(tipoPacchetto,baseArchismallApi);
+				if(endpoint == null) {
+					errors.add(" --> Per il Tipo Documento : "+submissionPack.getTipoDoc()+", il sistema non ha determinato se passivo/attivo ");
+					continue;
+				}
+				if(errors.isEmpty()) {
+					JSONObject json = null;
+					try {
+						json = submissionPack.getJSONVersamento(tipoPacchetto);
+						if(json != null && !json.isEmpty()) {
+
+							String key = KeyHelper.buildObjectKey(new String[] {
+									submissionPack.getIdLancio().trim(),
+									String.valueOf(submissionPack.getId()),
+									(String) json.get("idArchiPro")
+							});
+							
+							PacchettoInviato pacchettoInviato = (PacchettoInviato) Factory.createObject(PacchettoInviato.class);
+							pacchettoInviato.setKey(key);
+							pacchettoInviato.retrieve();
+							char statoArchismall = pacchettoInviato.getStatoArchismall();
+							switch (statoArchismall) {
+							case StatoPacchettoArchismall.DA_CONSERVARE:
+								Map<String,String> headers = new HashMap<String,String>();
+								try {
+									JSONObject response = baseArchismallApi.sendJSON(endpoint, json.toString(),headers,3);
+									Status status = (Status) response.get("status");
+									if(status != Status.OK) {
+										if(response.has("result")) {
+											JSONObject r = response.getJSONObject("result");
+											if(r.has("errors")) {
+												errors.add(r.get("errors").toString());
+												errorPackets++;
+											}else if(r.has("message")) {
+												String message = r.getString("message");
+												if(message.equals("Document already uploaded")) {
+													JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
+													if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
+														pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
+														successPackets++;
+													}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
+														pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
 														successPackets++;
 													}
-
-												} catch (Exception e) {
-													if(e instanceof PantheraApiException) {
-														if(e.getMessage().contains("Impossibile autenticarsi")) {
-															output.println(e.getMessage());
-															return false;
-														}
-													}
-													e.printStackTrace(Trace.excStream);
-													errorPackets++;
 												}
-												pacchettoInviato.save();
-												break;
-											case StatoPacchettoArchismall.CONSERVATO: 
-												successPackets++;
-												break;
-											case StatoPacchettoArchismall.WORKER_ERROR:
-												JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
-												if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
-													pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-													successPackets++;
-												}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
-													pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-													successPackets++;
-												}
-												pacchettoInviato.save();
-												break;
-											default:
-												break;
 											}
-										}else {
-											errors.add("JSON versamento NULL, FP.SUBMISSION_PACK_DETT.DESCR_ERRORE = "+submissionPack.getDescrErrore());
-											errorPackets++;
 										}
-									} catch (ThipException e) {
-										errors.add(e.getMessage());
-										e.printStackTrace(Trace.excStream);
-										errorPackets++;
-									} catch (SQLException e1) {
-										e1.printStackTrace(Trace.excStream);
+									}else {
+										successPackets++;
 									}
-								}
 
-								if(!errors.isEmpty()) {
-									output.println("Pacchetto "+submissionPack.getId()+", processato con errori: ");
-									for(String error : errors) {
-										output.println(error+" \n");
+								} catch (Exception e) {
+									if(e instanceof PantheraApiException) {
+										if(e.getMessage().contains("Impossibile autenticarsi")) {
+											output.println(e.getMessage());
+
+											//throw exc
+										}
 									}
-									output.println("");
-									isInError = true;
+									e.printStackTrace(Trace.excStream);
+									errorPackets++;
 								}
-
-								totSize++;
+								pacchettoInviato.save();
+								break;
+							case StatoPacchettoArchismall.CONSERVATO: 
+								successPackets++;
+								break;
+							case StatoPacchettoArchismall.WORKER_ERROR:
+								JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
+								if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
+									pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
+									successPackets++;
+								}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
+									pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
+									successPackets++;
+								}
+								pacchettoInviato.save();
+								break;
+							default:
+								break;
 							}
+						}else {
+							errors.add("JSON versamento NULL, FP.SUBMISSION_PACK_DETT.DESCR_ERRORE = "+submissionPack.getDescrErrore());
+							errorPackets++;
 						}
-						try {
-							ConnectionManager.commit();
-						} catch (SQLException e) {
-							e.printStackTrace(Trace.excStream);
-						}
-						output.println("Pacchetti totali = "+totSize);
-						output.println("Processati status code 200 = "+successPackets);
-						output.println("Con errore = "+errorPackets);
-						if(!isInError)
-							pacchetto.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
-						else
-							pacchetto.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO_CON_ERRORE);
-						try {
-							int rc = pacchetto.save();
-							if(rc > 0)
-								ConnectionManager.commit();
-							else
-								ConnectionManager.rollback();
-						} catch (SQLException e) {
-							result = false;
-							output.println(" --> Errore nel salvataggio del pacchettone : "+e.getMessage());
-							e.printStackTrace(Trace.excStream);
-						}
+					} catch (ThipException e) {
+						errors.add(e.getMessage());
+						e.printStackTrace(Trace.excStream);
+						errorPackets++;
+					} catch (SQLException e1) {
+						e1.printStackTrace(Trace.excStream);
 					}
 				}
-			}else {
-				output.println(" --> Non ci sono pacchetti da inviare con "+PacchettoTrasmissioneTM.TABLE_NAME+"."+PacchettoTrasmissioneTM.STATO_PACCHETTO+" = '"+PacchettoTrasmissione.NON_PROCESSATO+"' ");
-				return true;
+
+				try {
+					ConnectionManager.commit();
+				} catch (SQLException e) {
+					e.printStackTrace(Trace.excStream);
+				}
+				
+				output.println("Pacchetti totali = "+totSize);
+				output.println("Processati status code 200 = "+successPackets);
+				output.println("Con errore = "+errorPackets);
+
+				if(!errors.isEmpty()) {
+					output.println("Pacchetto "+submissionPack.getId()+", processato con errori: ");
+					for(String error : errors) {
+						output.println(error+" \n");
+					}
+					output.println("");
+					
+					rc = ErrorCodes.GENERIC_ERROR;
+				}
+				totSize++;
 			}
-		}else {
-			output.print(" ** Prima di inviare i pacchetti verso Archismall va definita la ConfigurazioneArchismall :"+ConfigurazioneArchismallTM.TABLE_NAME);
 		}
-		return result;
+		return rc;
+	}
+
+	/**
+	 * <h1>Softre Solutions</h1>
+	 * <br>
+	 * @author Daniele Signoroni 10/01/2025
+	 * <br><br>
+	 * <b>71XXX	DSSOF3	10/01/2025</b>
+	 * <p></p>
+	 * @param pacchetti
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public Map<String, List<SubmissionPackDett>> normalizzazionePacchetto(PacchettoTrasmissione pacchetto) {
+		List<SubmissionPackDett> submissionPackages = pacchetto.submissionPacksDettaglioDaPacchetto();
+		Map<String, List<SubmissionPackDett>> groupedMap = groupSubmissionPackagesForInvoice(submissionPackages);
+		for (Map.Entry<String, List<SubmissionPackDett>> entry : groupedMap.entrySet()) {
+			List<SubmissionPackDett> dettagli = entry.getValue();
+			Collections.sort(dettagli, new Comparator<SubmissionPackDett>() {
+				public int compare(SubmissionPackDett o1, SubmissionPackDett o2) {
+					return Long.compare(o1.getId(), o2.getId());
+				}
+			});
+			String validPath = null;
+			for(SubmissionPackDett submissionPack : dettagli) {
+				File file = new File(submissionPack.getNomeFile());
+				if(file.exists()) {
+					validPath = submissionPack.getNomeFile();
+				}else {
+					if(validPath != null) {
+						String path = findValidPathFromPrevoiusSubmissionPack(validPath,submissionPack);
+						file = new File(path);
+						if(!file.exists()) {
+							output.println(" --> File : "+path+", non trovato nel sistema");
+							output.println("Il pacchetto : " + entry.getKey() + " non verra' processato");
+							groupedMap.remove(entry.getKey());
+						}
+						submissionPack.setNomeFile(path);
+					}
+				}
+			}
+		}
+		return groupedMap;
 	}
 
 	/**

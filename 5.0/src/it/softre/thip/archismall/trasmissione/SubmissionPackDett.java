@@ -241,13 +241,16 @@ public class SubmissionPackDett {
 	 */
 	public String getEndpointDaTipoDocumento(Character tipoPacchetto, BaseArchismallApi baseArchismallApi) {
 		String baseURL = baseArchismallApi.getFormattedBaseURL();
+		String fullURL = "";
 		if(tipoPacchetto == null)
 			return null;
 		if(tipoPacchetto.equals('V'))
-			return baseURL + BaseArchismallApi.CONSERVAZIONE_ATTIVA_VERSAMENTO_ENDPOINT;
+			fullURL = baseURL + BaseArchismallApi.CONSERVAZIONE_ATTIVA_VERSAMENTO_ENDPOINT;
 		if(tipoPacchetto.equals('A'))
-			return baseURL + BaseArchismallApi.CONSERVAZIONE_PASSIVA_VERSAMENTO_ENDPOINT;
-		return null;
+			fullURL = baseURL + BaseArchismallApi.CONSERVAZIONE_PASSIVA_VERSAMENTO_ENDPOINT;
+		if(getNomeFile().contains("_RC"))
+			fullURL = baseURL + BaseArchismallApi.CONSERVAZIONE_ATTIVA_NOTIFICHE_VERSAMENTO_ENDPOINT;
+		return fullURL;
 	}
 
 	public String getEndpointStatoConservazione(Character tipoPacchetto, BaseArchismallApi baseArchismallApi) {

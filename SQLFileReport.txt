@@ -1,0 +1,6 @@
+*******************************************************
+TO FIND ERROR LOOK, FOR THE STRING #ERROR#
+TO FIND WARNINGS, LOOK FOR STRING #WARNING#
+TO FIND DUPLICATES, LOOK FOR THE STRING #DUPLICATE#
+*******************************************************
+----------------------------------------------------------
