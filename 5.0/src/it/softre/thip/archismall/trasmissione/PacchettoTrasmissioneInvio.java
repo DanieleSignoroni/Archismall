@@ -14,7 +14,6 @@ import java.util.StringTokenizer;
 
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.log4j.spi.ErrorCode;
 import org.json.JSONObject;
 
 import com.thera.thermfw.base.IniFile;
@@ -66,6 +65,7 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 		String dbName = IniFile.getValue("thermfw.ini","Web", "Database");
 		dbName = dbName.substring(0,dbName.indexOf(","));
 		boolean everythingOk = true;
+		dbName = "PANTH01";
 		try {
 			if(dbName.equals("PANTH01")) {
 				ConfigurazioneArchismall conf = ConfigurazioneArchismall.getConfigurazioneArchismall();
@@ -75,17 +75,16 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 					if(pacchetti.size() > 0) {
 						for (Iterator iterator = pacchetti.iterator(); iterator.hasNext();) {
 							PacchettoTrasmissione pacchetto = (PacchettoTrasmissione) iterator.next();
-							Character tipoPacchetto = PacchettoTrasmissione.getTipoPacchettone(pacchetto.getIdLancio());
 							Map<String, List<SubmissionPackDett>> dettagli = normalizzazionePacchetto(pacchetto);
-							int rc = inviaDettagliPacchettiVersoArchismall(dettagli,tipoPacchetto);
-							
+							int rc = inviaDettagliPacchettiVersoArchismall(dettagli,pacchetto);
+
 							//se tutto ok flaggo come processato, altrimenti processato come errore
 							if(rc > ErrorCodes.OK) {
 								pacchetto.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
 							}else {
 								pacchetto.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO_CON_ERRORE);
 							}
-							
+
 							try {
 								rc = pacchetto.save();
 								if(rc > 0)
@@ -96,7 +95,7 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 								output.println(" --> Errore nel salvataggio del pacchettone : "+e.getMessage());
 								e.printStackTrace(Trace.excStream);
 							}
-							
+
 						}
 					}
 				}else {
@@ -119,18 +118,21 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 	 * <br><br>
 	 * <b>71XXX	DSSOF3	10/01/2025</b>
 	 * <p></p>
-	 * @param tipoPacchetto 
+	 * @param pacchetto 
 	 * @param dettagli
 	 * @return
+	 * @throws PantheraApiException 
 	 */
-	public int inviaDettagliPacchettiVersoArchismall(Map<String, List<SubmissionPackDett>> groupedMap, Character tipoPacchetto) {
+	public int inviaDettagliPacchettiVersoArchismall(Map<String, List<SubmissionPackDett>> groupedMap, PacchettoTrasmissione pacchetto) throws PantheraApiException {
+		Character tipoPacchetto = PacchettoTrasmissione.getTipoPacchettone(pacchetto.getIdLancio());
 		int rc = ErrorCodes.OK;
+		int totSize = 0;
+		int successPackets = 0;
+		int errorPackets = 0;
+		String idAzienda = pacchetto.getIdAziendaPacchetto();
 		for (Map.Entry<String, List<SubmissionPackDett>> entry : groupedMap.entrySet()) {
 			List<SubmissionPackDett> dettagli = entry.getValue();
 			for(SubmissionPackDett submissionPack : dettagli) {
-				int totSize = 0;
-				int successPackets = 0;
-				int errorPackets = 0;
 				List<String> errors = new ArrayList<String>();
 				String endpoint = submissionPack.getEndpointDaTipoDocumento(tipoPacchetto,baseArchismallApi);
 				if(endpoint == null) {
@@ -144,20 +146,17 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 						if(json != null && !json.isEmpty()) {
 
 							String key = KeyHelper.buildObjectKey(new String[] {
-									submissionPack.getIdLancio().trim(),
-									String.valueOf(submissionPack.getId()),
-									(String) json.get("idArchiPro")
+									idAzienda,json.get("annoFattura").toString().trim(),
+									json.get("dataFattura").toString().trim(),json.get("numeroFattura").toString().trim()
 							});
-							
-							PacchettoInviato pacchettoInviato = (PacchettoInviato) Factory.createObject(PacchettoInviato.class);
-							pacchettoInviato.setKey(key);
-							pacchettoInviato.retrieve();
+
+							SendedPackArchismall pacchettoInviato = getPacchettoInviatoArchismall(key);
+
 							char statoArchismall = pacchettoInviato.getStatoArchismall();
 							switch (statoArchismall) {
 							case StatoPacchettoArchismall.DA_CONSERVARE:
-								Map<String,String> headers = new HashMap<String,String>();
 								try {
-									JSONObject response = baseArchismallApi.sendJSON(endpoint, json.toString(),headers,3);
+									JSONObject response = baseArchismallApi.sendJSON(endpoint, json.toString(),new HashMap<String,String>(),3);
 									Status status = (Status) response.get("status");
 									if(status != Status.OK) {
 										if(response.has("result")) {
@@ -167,19 +166,21 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 												errorPackets++;
 											}else if(r.has("message")) {
 												String message = r.getString("message");
-												if(message.equals("Document already uploaded")) {
-													JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
-													if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
-														pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-														successPackets++;
-													}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
-														pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-														successPackets++;
-													}
-												}
+												//												if(message.equals("Document already uploaded")) {
+												//													JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
+												//													if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
+												//														pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
+												//														successPackets++;
+												//													}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
+												//														pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
+												//														successPackets++;
+												//													}
+												//												}
+												errorPackets++;
 											}
 										}
 									}else {
+										pacchettoInviato.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
 										successPackets++;
 									}
 
@@ -187,32 +188,32 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 									if(e instanceof PantheraApiException) {
 										if(e.getMessage().contains("Impossibile autenticarsi")) {
 											output.println(e.getMessage());
-
-											//throw exc
+											throw (PantheraApiException) e;
 										}
 									}
 									e.printStackTrace(Trace.excStream);
 									errorPackets++;
 								}
-								pacchettoInviato.save();
 								break;
 							case StatoPacchettoArchismall.CONSERVATO: 
 								successPackets++;
 								break;
 							case StatoPacchettoArchismall.WORKER_ERROR:
-								JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
-								if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
-									pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-									successPackets++;
-								}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
-									pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-									successPackets++;
-								}
-								pacchettoInviato.save();
+								//								JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
+								//								if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
+								//									pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
+								//									successPackets++;
+								//								}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
+								//									pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
+								//									successPackets++;
+								//								}
 								break;
 							default:
 								break;
 							}
+
+							int rcPacket = pacchettoInviato.save();
+
 						}else {
 							errors.add("JSON versamento NULL, FP.SUBMISSION_PACK_DETT.DESCR_ERRORE = "+submissionPack.getDescrErrore());
 							errorPackets++;
@@ -226,29 +227,44 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 					}
 				}
 
-				try {
-					ConnectionManager.commit();
-				} catch (SQLException e) {
-					e.printStackTrace(Trace.excStream);
-				}
-				
-				output.println("Pacchetti totali = "+totSize);
-				output.println("Processati status code 200 = "+successPackets);
-				output.println("Con errore = "+errorPackets);
-
 				if(!errors.isEmpty()) {
 					output.println("Pacchetto "+submissionPack.getId()+", processato con errori: ");
 					for(String error : errors) {
 						output.println(error+" \n");
 					}
 					output.println("");
-					
+
 					rc = ErrorCodes.GENERIC_ERROR;
 				}
 				totSize++;
 			}
+
+			try {
+				if(rc >= ErrorCodes.OK) {
+					ConnectionManager.commit();
+				}else {
+					ConnectionManager.rollback();
+				}
+			}catch (SQLException e) {
+				e.printStackTrace(Trace.excStream);
+			}
+
+			output.println("** Pacchetti totali processati = "+totSize);
+			output.println("** Pacchetti totali processati con successo = "+successPackets);
+			output.println("** Pacchettei totali processati con errore = "+errorPackets);
 		}
 		return rc;
+	}
+
+	public SendedPackArchismall getPacchettoInviatoArchismall(String key) {
+		SendedPackArchismall packet = (SendedPackArchismall) Factory.createObject(SendedPackArchismall.class);
+		packet.setKey(key);
+		try {
+			packet.retrieve();
+		} catch (SQLException e) {
+			e.printStackTrace(Trace.excStream);
+		}
+		return packet;
 	}
 
 	/**
@@ -261,7 +277,6 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 	 * @param pacchetti
 	 * @return
 	 */
-	@SuppressWarnings("rawtypes")
 	public Map<String, List<SubmissionPackDett>> normalizzazionePacchetto(PacchettoTrasmissione pacchetto) {
 		List<SubmissionPackDett> submissionPackages = pacchetto.submissionPacksDettaglioDaPacchetto();
 		Map<String, List<SubmissionPackDett>> groupedMap = groupSubmissionPackagesForInvoice(submissionPackages);

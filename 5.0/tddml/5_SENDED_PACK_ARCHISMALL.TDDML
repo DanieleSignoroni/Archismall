@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE TDDML SYSTEM "../../../TDDML.dtd">
+<TDDML>
+  <!-- SENDED_PACK_ARCHISMALL (SENDED_): Pacchetto inviato - Archismall; -->
+  <CreateTable schema="SOFTRE" name="SENDED_PACK_ARCHISMALL" shortname="SENDED_">
+    <Column name="ID_AZIENDA" shortname="ID_AZIENDA" type="char" length="3" nullable="no"/>
+    <Column name="STATO" shortname="STATO" type="char" length="1" nullable="no"/>
+    <Column name="R_UTENTE_CRZ" shortname="R_UTENTE_C" type="char" length="20" nullable="yes"/>
+    <Column name="TIMESTAMP_CRZ" shortname="TIMESTAMP_" type="timestamp" nullable="no" default="CURRENT TIMESTAMP"/>
+    <Column name="R_UTENTE_AGG" shortname="R_UTENTE_A" type="char" length="20" nullable="yes"/>
+    <Column name="TIMESTAMP_AGG" shortname="TIMESTAMP0" type="timestamp" nullable="no" default="CURRENT TIMESTAMP"/>
+    <Column name="R_ANNO_FATTURA" shortname="R_ANNO_FAT" type="char" length="6" nullable="no"/>
+    <Column name="DATA_FATTURA" shortname="DATA_FATTU" type="date" nullable="no"/>
+    <Column name="R_NUMERO_FATTURA" shortname="R_NUMERO_F" type="char" length="10" nullable="no"/>
+    <Column name="STATO_PACCHETTO" shortname="STATO_PACC" type="char" length="1" nullable="no" default="0"/>
+    <Column name="STATO_ARCHISMALL" shortname="STATO_ARCH" type="char" length="1" nullable="no" default="1"/>
+    <Column name="R_LANCIO" shortname="R_LANCIO" type="varchar" length="255" nullable="yes"/>
+    <Column name="ID_ARCHI_PRO" shortname="ID_ARCHI_P" type="varchar" length="255" nullable="yes"/>
+  </CreateTable>
+  <CreateIndex schema="SOFTRE" name="SENDED_PACK_AR_I01" tabschema="SOFTRE" tabname="SENDED_PACK_ARCHISMALL" shortname="SENDED_I01" unique="yes">
+    <IndexCol name="ID_AZIENDA" order="Asc"/>
+    <IndexCol name="R_ANNO_FATTURA" order="Asc"/>
+    <IndexCol name="DATA_FATTURA" order="Asc"/>
+    <IndexCol name="R_NUMERO_FATTURA" order="Asc"/>
+  </CreateIndex>
+  <AlterTable schema="SOFTRE" name="SENDED_PACK_ARCHISMALL">
+    <AddPrimaryKey>
+      <PrimaryKey>
+        <ColumnRef name="ID_AZIENDA"/>
+        <ColumnRef name="R_ANNO_FATTURA"/>
+        <ColumnRef name="DATA_FATTURA"/>
+        <ColumnRef name="R_NUMERO_FATTURA"/>
+      </PrimaryKey>
+    </AddPrimaryKey>
+  </AlterTable>
+  <Comment>
+    <CommentTable schema="SOFTRE" name="SENDED_PACK_ARCHISMALL" text="Pacchetto inviato - Archismall">
+      <CommentColumn name="ID_AZIENDA" text="Azienda"/>
+      <CommentColumn name="STATO" text="Stato"/>
+      <CommentColumn name="R_UTENTE_CRZ" text="Utente creazione"/>
+      <CommentColumn name="TIMESTAMP_CRZ" text="Timestamp creazione"/>
+      <CommentColumn name="R_UTENTE_AGG" text="Utente ultima modifica"/>
+      <CommentColumn name="TIMESTAMP_AGG" text="Timestamp ultima modifica"/>
+      <CommentColumn name="R_ANNO_FATTURA" text="Anno fattura"/>
+      <CommentColumn name="DATA_FATTURA" text="Data Fattura"/>
+      <CommentColumn name="R_NUMERO_FATTURA" text="Numero Fattura"/>
+      <CommentColumn name="STATO_PACCHETTO" text="Stato Pacchetto"/>
+      <CommentColumn name="STATO_ARCHISMALL" text="Stato Archismall"/>
+      <CommentColumn name="R_LANCIO" text="Codice Lancio"/>
+      <CommentColumn name="ID_ARCHI_PRO" text="Id Archismall"/>
+    </CommentTable>
+    <CommentIndex schema="SOFTRE" name="SENDED_PACK_AR_I01" text="Primary Key"/>
+  </Comment>
+  <Grant schema="SOFTRE" name="SENDED_PACK_ARCHISMALL"/>
+</TDDML>

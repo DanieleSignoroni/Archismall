@@ -58,7 +58,7 @@ public class SubmissionPackDett {
 	private Integer f9iaprt;
 	private Integer f9inprt;
 	private Date f9iupri;
-
+	
 	public long getId() {
 		return id;
 	}
