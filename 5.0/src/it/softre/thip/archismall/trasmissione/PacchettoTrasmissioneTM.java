@@ -44,9 +44,9 @@ public class PacchettoTrasmissioneTM extends TableManager {
 			.getName();
 
 	public synchronized static TableManager getInstance() throws SQLException {
-		//if (cInstance == null) {
+		if (cInstance == null) {
 			cInstance = (TableManager) Factory.createObject(PacchettoTrasmissioneTM.class);
-		//}
+		}
 		return cInstance;
 	}
 

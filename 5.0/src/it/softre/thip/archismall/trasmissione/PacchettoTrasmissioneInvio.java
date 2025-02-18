@@ -129,11 +129,16 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 		int totSize = 0;
 		int successPackets = 0;
 		int errorPackets = 0;
+		Integer submissionPackDettTot = 0;
+		Integer inviatiCorrettamente = 0;
 		String idAzienda = pacchetto.getIdAziendaPacchetto();
 		for (Map.Entry<String, List<SubmissionPackDett>> entry : groupedMap.entrySet()) {
 			List<SubmissionPackDett> dettagli = entry.getValue();
+			submissionPackDettTot += dettagli.size();
 			for(SubmissionPackDett submissionPack : dettagli) {
 				List<String> errors = new ArrayList<String>();
+
+				//1.Recupero l'endpoint per capire se sto versando una fattura attiva/passiva o una notifica
 				String endpoint = submissionPack.getEndpointDaTipoDocumento(tipoPacchetto,baseArchismallApi);
 				if(endpoint == null) {
 					errors.add(" --> Per il Tipo Documento : "+submissionPack.getTipoDoc()+", il sistema non ha determinato se passivo/attivo ");
@@ -142,6 +147,7 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 				if(errors.isEmpty()) {
 					JSONObject json = null;
 					try {
+						//2.Recupero il json del pacchetto che sto andando a caricare in Archismall
 						json = submissionPack.getJSONVersamento(tipoPacchetto);
 						if(json != null && !json.isEmpty()) {
 
@@ -150,12 +156,23 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 									json.get("dataFattura").toString().trim(),json.get("numeroFattura").toString().trim()
 							});
 
+							//3.Creo/Recupero il record nella tabella di appoggio che mi aiuta a capire quali pacchetti sono gia' stati inviati
 							SendedPackArchismall pacchettoInviato = getPacchettoInviatoArchismall(key);
+
+							//4.Pacchetto gia' processato con successo quindi lo salto
+							if(pacchettoInviato.isOnDB() && pacchettoInviato.getStatoPacchetto() == PacchettoTrasmissione.PROCESSATO) {
+								continue;
+							}else {
+								pacchettoInviato.setIdLancio(pacchetto.getIdLancio());
+								pacchettoInviato.setIdArchiPro(json.getString("idArchiPro"));
+							}
 
 							char statoArchismall = pacchettoInviato.getStatoArchismall();
 							switch (statoArchismall) {
+							//5.Il pacchetto e' da conservare quindi da caricare in Archismall
 							case StatoPacchettoArchismall.DA_CONSERVARE:
 								try {
+									//6.Tramite la mia classe di utilities mando la POST al portale
 									JSONObject response = baseArchismallApi.sendJSON(endpoint, json.toString(),new HashMap<String,String>(),3);
 									Status status = (Status) response.get("status");
 									if(status != Status.OK) {
@@ -165,23 +182,16 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 												errors.add(r.get("errors").toString());
 												errorPackets++;
 											}else if(r.has("message")) {
-												String message = r.getString("message");
-												//												if(message.equals("Document already uploaded")) {
-												//													JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
-												//													if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
-												//														pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-												//														successPackets++;
-												//													}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
-												//														pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-												//														successPackets++;
-												//													}
-												//												}
 												errorPackets++;
 											}
 										}
+										//Se ci sono errori allora il pacchetto e' da processare nuovamente
+										pacchettoInviato.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO_CON_ERRORE);
 									}else {
+										//Se tutto ok lo flaggo come processato e vado avanti
 										pacchettoInviato.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
 										successPackets++;
+										inviatiCorrettamente++;
 									}
 
 								} catch (Exception e) {
@@ -195,24 +205,18 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 									errorPackets++;
 								}
 								break;
-							case StatoPacchettoArchismall.CONSERVATO: 
-								successPackets++;
-								break;
-							case StatoPacchettoArchismall.WORKER_ERROR:
-								//								JSONObject stato = submissionPack.recuperaStatoConservazionePacchettoArchismall(pacchettoInviato.getIdArchiPro(),tipoPacchetto,baseArchismallApi);
-								//								if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Da conservare")) {
-								//									pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-								//									successPackets++;
-								//								}else if(stato.has("statusDescription") && stato.getString("statusDescription").equals("Conservato")) {
-								//									pacchettoInviato.setStatoArchismall(StatoPacchettoArchismall.CONSERVATO);
-								//									successPackets++;
-								//								}
-								break;
 							default:
 								break;
 							}
 
-							int rcPacket = pacchettoInviato.save();
+							//Infine aggiorno il record
+							//Qui devo committare per forza ad ogni singolo dettaglio in quanto la chiamata API e' stata eseguita
+							int rcPckt = pacchettoInviato.save();
+							if(rcPckt > 0) {
+								ConnectionManager.commit();
+							}else {
+								ConnectionManager.rollback();
+							}
 
 						}else {
 							errors.add("JSON versamento NULL, FP.SUBMISSION_PACK_DETT.DESCR_ERRORE = "+submissionPack.getDescrErrore());
@@ -239,7 +243,13 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 				totSize++;
 			}
 
+			if(inviatiCorrettamente.compareTo(submissionPackDettTot) == 0) {
+				pacchetto.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO);
+			}else {
+				pacchetto.setStatoPacchetto(PacchettoTrasmissione.PROCESSATO_CON_ERRORE);
+			}
 			try {
+				rc = pacchetto.save();
 				if(rc >= ErrorCodes.OK) {
 					ConnectionManager.commit();
 				}else {

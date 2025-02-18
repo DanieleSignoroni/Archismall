@@ -134,6 +134,7 @@ public abstract class PacchettoTrasmissionePO extends PersistentObject
 
 	public void setIdSocieta(Integer iIdSocieta) {
 		this.iIdSocieta = iIdSocieta;
+		setDirty();
 	}
 
 	public void setEqual(Copyable obj) throws CopyException {

@@ -312,6 +312,16 @@ public class SubmissionPackDett {
 		return new String (Base64.getEncoder().encode(bytes));
 	}
 
+	/**
+	 * Recupera il JSON del pacchetto [FP.SUBMISSION_PACK_DETT] da caricare nel portale Archismall<br>
+	 * Il pacchetto contiene alcuni metadati presenti nella tabella [THIP.F9IVA00K/FP.F9IVA00K].<br>
+	 * 
+	 * Il JSON inoltre contiene un idArchiPro che equivale ad un progressivo alfanumerico che il portale vuole.<br>
+	 * 
+	 * @param tipo
+	 * @return
+	 * @throws ThipException
+	 */
 	public JSONObject getJSONVersamento(char tipo) throws ThipException {
 		JSONObject json = new JSONObject();
 		try {
