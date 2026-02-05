@@ -40,30 +40,38 @@ import it.thera.thip.api.client.ApiResponse;
  * <h1>Softre Solutions</h1>
  * <br>
  * @author Daniele Signoroni 15/05/2024
- * <br><br>
- * <b>71578	DSSOF3	15/05/2024</b>
- * <p>Prima stesura.<br>
- *  
- * </p>
- * <b>71578	DSSOF3	28/08/2024</b>
- * <p>
- *  Sistemare il metodo {@link #getBaseParametersForAuthentication(String)} decryptando la pwd a database.<br>
- * </p>
+ */
+
+/*
+ * Revisions:
+ * Number   Date        Owner    Description
+ * 71578    08/07/2024  DSSOF3   Prima stesura
+ * 72260	18/12/2025	DSSOF3	 Aggiunta p.IVA nei grant, deprecare URL v1 per nuovi URL v2
  */
 
 public class BaseArchismallApi {
 
 	public static final String AUTH_ENDPOINT = "oauth/token";
 
-	public static final String CONSERVAZIONE_PASSIVA_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-passiva/versamento";
+	//	public static final String CONSERVAZIONE_PASSIVA_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-passiva/versamento";
+	//
+	//	public static final String CONSERVAZIONE_ATTIVA_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-attivo/versamento";
+	//
+	//	public static final String CONSERVAZIONE_ATTIVA_STATO_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-attivo/stato-conservazione";
+	//
+	//	public static final String CONSERVAZIONE_PASSIVA_STATO_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-passiva/stato-conservazione";
+	//
+	//	public static final String CONSERVAZIONE_ATTIVA_NOTIFICHE_VERSAMENTO_ENDPOINT = "api/v1/conservazione/notifiche-sdi/versamento";
 
-	public static final String CONSERVAZIONE_ATTIVA_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-attivo/versamento";
+	public static final String CONSERVAZIONE_PASSIVA_VERSAMENTO_ENDPOINT = "api/v2/conservazione/fattura-passiva/versamento";
 
-	public static final String CONSERVAZIONE_ATTIVA_STATO_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-attivo/stato-conservazione";
+	public static final String CONSERVAZIONE_ATTIVA_VERSAMENTO_ENDPOINT = "api/v2/conservazione/fattura-attivo/versamento";
 
-	public static final String CONSERVAZIONE_PASSIVA_STATO_VERSAMENTO_ENDPOINT = "api/v1/conservazione/fattura-passiva/stato-conservazione";
-	
-	public static final String CONSERVAZIONE_ATTIVA_NOTIFICHE_VERSAMENTO_ENDPOINT = "api/v1/conservazione/notifiche-sdi/versamento";
+	public static final String CONSERVAZIONE_ATTIVA_STATO_VERSAMENTO_ENDPOINT = "api/v2/conservazione/fattura-attivo/stato-conservazione";
+
+	public static final String CONSERVAZIONE_PASSIVA_STATO_VERSAMENTO_ENDPOINT = "api/v2/conservazione/fattura-passiva/stato-conservazione";
+
+	public static final String CONSERVAZIONE_ATTIVA_NOTIFICHE_VERSAMENTO_ENDPOINT = "api/v2/conservazione/notifiche-sdi/versamento";
 
 	private Token token = null;
 
@@ -206,6 +214,7 @@ public class BaseArchismallApi {
 				e.printStackTrace(Trace.excStream);
 			}
 			parameters += "&grant_type="+grantType+"&username="+getConfigurazioneArchismall().getIdUtente()+"&password="+pwd;
+			parameters += "&piva="+getConfigurazioneArchismall().getPartitaIva(); //72260
 		}
 		return parameters;
 	}

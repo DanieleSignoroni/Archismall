@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE TDDML SYSTEM "../../../TDDML.dtd">
+<TDDML>
+  <AlterTable schema="SOFTRE" name="CONFIGURAZIONE_ARCHISMALL">
+    <AddColumn>
+	  <Column name="PARTITA_IVA" shortname="PARTITA_IVA" type="char" length="12" nullable="no"/>
+    </AddColumn>
+  </AlterTable>
+</TDDML>
