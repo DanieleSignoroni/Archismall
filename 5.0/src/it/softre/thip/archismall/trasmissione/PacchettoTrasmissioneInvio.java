@@ -163,7 +163,7 @@ public class PacchettoTrasmissioneInvio extends BatchRunnable implements Authori
 											}else if(r.has("message")) {
 												errorPackets++;
 												if(r.get("message") != JSONObject.NULL 
-														&& r.get("message").equals("Document already uploaded") 
+														&& (r.get("message").equals("Document already uploaded") || r.get("message").equals("Document already exists"))
 														&& !pacchettoInviato.isOnDB()
 														&& (submissionPack.getNomeFile() == null || submissionPack.getNomeFile().isEmpty())) {
 													pacchettoInviato.setNomeFile(pacchettoInviato.getIdNumeroFattura());

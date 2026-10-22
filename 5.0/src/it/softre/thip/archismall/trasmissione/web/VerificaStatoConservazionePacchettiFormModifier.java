@@ -11,7 +11,6 @@ import com.thera.thermfw.persist.PersistentObject;
 import com.thera.thermfw.web.WebFormModifier;
 
 import it.softre.thip.archismall.trasmissione.PacchettoTrasmissione;
-import it.softre.thip.archismall.trasmissione.PacchettoTrasmissioneInvio;
 import it.softre.thip.archismall.trasmissione.VerificaStatoConservazionePacchetti;
 import it.thera.thip.cs.ColonneFiltri;
 

@@ -277,9 +277,9 @@ public class SubmissionPackDett {
 		if(tipoPacchetto == null)
 			return null;
 		if(tipoPacchetto.equals('V')) {
-			return baseURL + BaseArchismallApi.CONSERVAZIONE_ATTIVA_STATO_VERSAMENTO_ENDPOINT;
+			fullURL = baseURL + BaseArchismallApi.CONSERVAZIONE_ATTIVA_STATO_VERSAMENTO_ENDPOINT;
 		}else if(tipoPacchetto.equals('A')) {
-			return baseURL + BaseArchismallApi.CONSERVAZIONE_PASSIVA_STATO_VERSAMENTO_ENDPOINT;
+			fullURL = baseURL + BaseArchismallApi.CONSERVAZIONE_PASSIVA_STATO_VERSAMENTO_ENDPOINT;
 		}
 		if(getNomeFile().contains("_RC_") || //.Ricevuta consegna
 				getNomeFile().contains("_NS_") || //.Notifica scarto
